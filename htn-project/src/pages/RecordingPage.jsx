@@ -1,5 +1,6 @@
 // src/pages/RecordingPage.jsx
 import React, { useRef, useState } from "react";
+import { useNavigate } from "react-router-dom";
 
 export default function RecordingPage() {
     const videoRef = useRef(null);
@@ -7,6 +8,8 @@ export default function RecordingPage() {
     const [isRecording, setIsRecording] = useState(false);
     const [stream, setStream] = useState(null);
     const [recordedChunks, setRecordedChunks] = useState([]);
+    const [recordingStopped, setRecordingStopped] = useState(false);
+    const navigate = useNavigate();
 
     const startCamera = async () => {
         try {
@@ -34,6 +37,10 @@ export default function RecordingPage() {
             }
         };
 
+        recorder.onstop = () => {
+            setRecordingStopped(true);
+        };
+
         recorder.start();
         setIsRecording(true);
     };
@@ -53,6 +60,33 @@ export default function RecordingPage() {
         URL.revokeObjectURL(url);
     };
 
+    const uploadVideo = async () => {
+        const blob = new Blob(recordedChunks, { type: "video/webm" });
+        const formData = new FormData();
+        formData.append("video", blob, "recording.webm");
+
+        try {
+            const response = await fetch("http://localhost:5000/upload-video", {
+                method: "POST",
+                body: formData,
+            });
+
+            const data = await response.json();
+            if (response.ok) {
+                alert("Uploaded successfully! 🎉\nURL: " + data.url);
+            } else {
+                alert("Upload failed: " + data.error);
+            }
+        } catch (err) {
+            console.error("Upload error:", err);
+            alert("Upload failed. Check console for details.");
+        }
+    };
+
+    const goToGallery = () => {
+        navigate("/gallery");
+    };
+
     return (
         <div style={{ textAlign: "center", padding: "20px", color: "#eaeaea" }}>
             <h1>Recording Page</h1>
@@ -64,7 +98,6 @@ export default function RecordingPage() {
                 muted
                 style={{
                     width: "60%",
-                    height: "px",
                     border: "2px solid #9bf0ff",
                     borderRadius: "8px",
                     transform: "scaleX(-1)"
@@ -88,8 +121,18 @@ export default function RecordingPage() {
                     </button>
                 )}
                 {recordedChunks.length > 0 && (
-                    <button onClick={downloadVideo} style={{ ...btnStyle, background: "#79e0f2" }}>
-                        Download Recording
+                    <>
+                        <button onClick={downloadVideo} style={{ ...btnStyle, background: "#79e0f2" }}>
+                            Download Recording
+                        </button>
+                        <button onClick={uploadVideo} style={{ ...btnStyle, background: "#28a745" }}>
+                            Add to Gallery
+                        </button>
+                    </>
+                )}
+                {recordingStopped && (
+                    <button onClick={goToGallery} style={{ ...btnStyle, background: "#ffa500" }}>
+                        View Gallery
                     </button>
                 )}
             </div>
