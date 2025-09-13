@@ -47,3 +47,9 @@ tmp/
 *.bak
 coverage/
 *.lcov
+
+#IDE
+.idea/
+
+# stray root lockfile
+/package-lock.json
