@@ -7,18 +7,43 @@ yarn-error.log*
 pnpm-debug.log*
 lerna-debug.log*
 
+# Node
 node_modules
 dist
 dist-ssr
+.vite
+.cache
 *.local
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+venv/
+.env
+.ipynb_checkpoints/
 
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json
 .idea
+
+# OS
 .DS_Store
+.AppleDouble
+.LSOverride
+Thumbs.db
+Desktop.ini
+
+# Misc
 *.suo
 *.ntvs*
 *.njsproj
 *.sln
 *.sw?
+tmp/
+*.temp
+*.bak
+coverage/
+*.lcov
