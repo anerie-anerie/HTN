@@ -11,7 +11,9 @@ export default function RecordingPage() {
   const [recordedChunks, setRecordedChunks] = useState([]);
   const [recordingStopped, setRecordingStopped] = useState(false);
 
-  const [showModal, setShowModal] = useState(false);
+  const [showUploadModal, setShowUploadModal] = useState(false);
+  const [motionModal, setMotionModal] = useState(false);
+  const [motionType, setMotionType] = useState(null); // "high" | "low"
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
 
@@ -29,9 +31,7 @@ export default function RecordingPage() {
 
     wsRef.current = new WebSocket("ws://127.0.0.1:8000/ws/camera");
 
-    wsRef.current.onopen = () => {
-      console.log("WS open");
-    };
+    wsRef.current.onopen = () => console.log("WS open");
 
     wsRef.current.onmessage = (event) => {
       try {
@@ -50,9 +50,7 @@ export default function RecordingPage() {
       }
     };
 
-    wsRef.current.onclose = () => {
-      console.log("WebSocket camera closed");
-    };
+    wsRef.current.onclose = () => console.log("WebSocket camera closed");
 
     const canvasStream = canvas.captureStream(30);
 
@@ -74,21 +72,56 @@ export default function RecordingPage() {
       alert("Enable the camera first!");
       return;
     }
+    // Show motion selection modal
+    setMotionModal(true);
+  };
 
+  const confirmMotion = (type) => {
+    setMotionType(type);
+    setMotionModal(false);
+
+    if (type === "high") {
+      startHighMotionRecording();
+    } else if (type === "low") {
+      startLowMotionRecording();
+    }
+  };
+
+  const startHighMotionRecording = () => {
     const recorder = new MediaRecorder(stream, { mimeType: "video/webm" });
     mediaRecorderRef.current = recorder;
     setRecordedChunks([]);
 
     recorder.ondataavailable = (event) => {
-      if (event.data.size > 0) {
-        setRecordedChunks((prev) => [...prev, event.data]);
-      }
+      if (event.data.size > 0) setRecordedChunks((prev) => [...prev, event.data]);
     };
 
     recorder.onstop = () => setRecordingStopped(true);
 
     recorder.start();
     setIsRecording(true);
+
+    // Start Tone.js music generation (existing high motion logic)
+    console.log("High motion music started");
+  };
+
+  const startLowMotionRecording = () => {
+    const recorder = new MediaRecorder(stream, { mimeType: "video/webm" });
+    mediaRecorderRef.current = recorder;
+    setRecordedChunks([]);
+
+    recorder.ondataavailable = (event) => {
+      if (event.data.size > 0) setRecordedChunks((prev) => [...prev, event.data]);
+    };
+
+    recorder.onstop = () => setRecordingStopped(true);
+
+    recorder.start();
+    setIsRecording(true);
+
+    // Low motion music generation
+    console.log("Low motion music started (use pentatonic/blink/head tilt logic)");
+    // Here you would call your Python backend or WebAssembly logic for low-motion
   };
 
   const stopRecording = () => {
@@ -122,7 +155,7 @@ export default function RecordingPage() {
 
       if (response.ok) {
         alert("Uploaded successfully!");
-        setShowModal(false);
+        setShowUploadModal(false);
         setTitle("");
         setDescription("");
       } else {
@@ -178,7 +211,7 @@ export default function RecordingPage() {
               Download Recording
             </button>
             <button
-              onClick={() => setShowModal(true)}
+              onClick={() => setShowUploadModal(true)}
               style={{ ...btnStyle, background: "#28a745" }}
             >
               Add to Gallery
@@ -195,11 +228,33 @@ export default function RecordingPage() {
         )}
       </div>
 
-      {showModal && (
+      {/* Motion Selection Modal */}
+      {motionModal && (
+        <div style={modalOverlay}>
+          <div style={modalContent}>
+            <h2>Choose Motion Type</h2>
+            <p>Do you want Low Motion or High Motion music generation?</p>
+            <button
+              style={{ ...btnStyle, background: "#79e0f2" }}
+              onClick={() => confirmMotion("high")}
+            >
+              High Motion
+            </button>
+            <button
+              style={{ ...btnStyle, background: "#79e0f2" }}
+              onClick={() => confirmMotion("low")}
+            >
+              Low Motion
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Upload Modal */}
+      {showUploadModal && (
         <div style={modalOverlay}>
           <div style={modalContent}>
             <h2 style={{ marginTop: 0 }}>Submit to Gallery</h2>
-
             <input
               type="text"
               placeholder="Enter a title"
@@ -213,7 +268,6 @@ export default function RecordingPage() {
               onChange={(e) => setDescription(e.target.value)}
               style={{ ...inputStyle, height: 80 }}
             />
-
             <div>
               <button
                 onClick={confirmUpload}
@@ -222,7 +276,7 @@ export default function RecordingPage() {
                 Upload
               </button>
               <button
-                onClick={() => setShowModal(false)}
+                onClick={() => setShowUploadModal(false)}
                 style={{ ...btnStyle, background: "#ff2f2f" }}
               >
                 Cancel
