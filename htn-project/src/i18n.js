@@ -43,6 +43,7 @@ export const tdict = {
     inspoTitle: "Inspiración",
     inspoCopy:
     "La sinestesia es un fenómeno neurológico. Un estímulo en una vía sensorial o cognitiva desencadena una experiencia automática e involuntaria en otra. Algunos ejemplos incluyen el sabor de las palabras o la audición de los colores. No es una enfermedad. Es una forma de cruce sensorial. Las formas comunes incluyen la sinestesia grafema-color, donde las letras y los números tienen colores, y la sinestesia sonora-color, donde la música evoca colores.",
+    corner1: "Mira la música. Escucha el arte.",
     corner2: "Muévete y deja que se encuentren.",
     language: "Idioma",
     speak: "Hablar",
