@@ -13,9 +13,12 @@ export default function RecordingPage() {
   const [recordedChunks, setRecordedChunks] = useState([]);
   const [recordingStopped, setRecordingStopped] = useState(false);
 
-  const [showModal, setShowModal] = useState(false);
+  const [showUploadModal, setShowUploadModal] = useState(false);
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
+
+  const [showModeModal, setShowModeModal] = useState(false);
+  const [selectedMode, setSelectedMode] = useState(null);
 
   const navigate = useNavigate();
   const synthRef = useRef(null);
@@ -31,9 +34,7 @@ export default function RecordingPage() {
 
     wsRef.current = new WebSocket("ws://127.0.0.1:8000/ws/camera");
 
-    wsRef.current.onopen = () => {
-      console.log("WS open");
-    };
+    wsRef.current.onopen = () => console.log("WS open");
 
     wsRef.current.onmessage = (event) => {
       try {
@@ -52,18 +53,13 @@ export default function RecordingPage() {
       }
     };
 
-    wsRef.current.onclose = () => {
-      console.log("WebSocket camera closed");
-    };
+    wsRef.current.onclose = () => console.log("WebSocket camera closed");
 
     const canvasStream = canvas.captureStream(30);
 
     try {
       const mic = await navigator.mediaDevices.getUserMedia({ audio: true });
-      const combined = new MediaStream([
-        ...canvasStream.getTracks(),
-        ...mic.getTracks(),
-      ]);
+      const combined = new MediaStream([...canvasStream.getTracks(), ...mic.getTracks()]);
       setStream(combined);
     } catch (err) {
       console.error("Mic access failed:", err);
@@ -71,12 +67,32 @@ export default function RecordingPage() {
     }
   };
 
+  // --- Recording & Mode Selection ---
   const startRecording = () => {
     if (!stream) {
       alert("Enable the camera first!");
       return;
     }
+    setShowModeModal(true); // Show mode selection modal
+  };
 
+  const confirmMode = async (mode) => {
+    setSelectedMode(mode);
+    setShowModeModal(false);
+
+    // Tell backend which mode to run
+    try {
+      await fetch("http://127.0.0.1:8000/set-mode", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ mode }),
+      });
+      console.log("Mode set:", mode);
+    } catch (err) {
+      console.error("Failed to set mode:", err);
+    }
+
+    // Start MediaRecorder
     const recorder = new MediaRecorder(stream, { mimeType: "video/webm" });
     mediaRecorderRef.current = recorder;
     setRecordedChunks([]);
@@ -121,10 +137,9 @@ export default function RecordingPage() {
         body: formData,
       });
       const data = await response.json();
-
       if (response.ok) {
         alert("Uploaded successfully!");
-        setShowModal(false);
+        setShowUploadModal(false);
         setTitle("");
         setDescription("");
       } else {
@@ -148,88 +163,46 @@ export default function RecordingPage() {
           width: "60%",
           border: "2px solid #9bf0ff",
           borderRadius: "8px",
-          transform: "scaleX(-1)",
+          transform: "scaleX(1)",
         }}
       />
 
       <div style={{ marginTop: "20px" }}>
-        {!stream && (
-          <button onClick={enableCamera} style={btnStyle}>
-            Enable Camera
-          </button>
-        )}
-        {!isRecording && stream && (
-          <button onClick={startRecording} style={btnStyle}>
-            Start Recording
-          </button>
-        )}
-        {isRecording && (
-          <button
-            onClick={stopRecording}
-            style={{ ...btnStyle, background: "#ff2fb3" }}
-          >
-            Stop Recording
-          </button>
-        )}
+        {!stream && <button onClick={enableCamera} style={btnStyle}>Enable Camera</button>}
+        {!isRecording && stream && <button onClick={startRecording} style={btnStyle}>Start Recording</button>}
+        {isRecording && <button onClick={stopRecording} style={{ ...btnStyle, background: "#ff2fb3" }}>Stop Recording</button>}
         {recordedChunks.length > 0 && (
           <>
-            <button
-              onClick={downloadVideo}
-              style={{ ...btnStyle, background: "#79e0f2" }}
-            >
-              Download Recording
-            </button>
-            <button
-              onClick={() => setShowModal(true)}
-              style={{ ...btnStyle, background: "#28a745" }}
-            >
-              Add to Gallery
-            </button>
+            <button onClick={downloadVideo} style={{ ...btnStyle, background: "#79e0f2" }}>Download Recording</button>
+            <button onClick={() => setShowUploadModal(true)} style={{ ...btnStyle, background: "#28a745" }}>Add to Gallery</button>
           </>
         )}
-        {recordingStopped && (
-          <button
-            onClick={goToGallery}
-            style={{ ...btnStyle, background: "#ffa500" }}
-          >
-            View Gallery
-          </button>
-        )}
+        {recordingStopped && <button onClick={goToGallery} style={{ ...btnStyle, background: "#ffa500" }}>View Gallery</button>}
       </div>
 
-      {showModal && (
+      {/* Upload Modal */}
+      {showUploadModal && (
         <div style={modalOverlay}>
           <div style={modalContent}>
             <h2 style={{ marginTop: 0 }}>Submit to Gallery</h2>
-
-            <input
-              type="text"
-              placeholder="Enter a title"
-              value={title}
-              onChange={(e) => setTitle(e.target.value)}
-              style={inputStyle}
-            />
-            <textarea
-              placeholder="Enter a description"
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-              style={{ ...inputStyle, height: 80 }}
-            />
-
+            <input type="text" placeholder="Enter a title" value={title} onChange={(e) => setTitle(e.target.value)} style={inputStyle} />
+            <textarea placeholder="Enter a description" value={description} onChange={(e) => setDescription(e.target.value)} style={{ ...inputStyle, height: 80 }} />
             <div>
-              <button
-                onClick={confirmUpload}
-                style={{ ...btnStyle, background: "#28a745" }}
-              >
-                Upload
-              </button>
-              <button
-                onClick={() => setShowModal(false)}
-                style={{ ...btnStyle, background: "#ff2f2f" }}
-              >
-                Cancel
-              </button>
+              <button onClick={confirmUpload} style={{ ...btnStyle, background: "#28a745" }}>Upload</button>
+              <button onClick={() => setShowUploadModal(false)} style={{ ...btnStyle, background: "#ff2f2f" }}>Cancel</button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Mode Selection Modal */}
+      {showModeModal && (
+        <div style={modalOverlay}>
+          <div style={modalContent}>
+            <h2>Choose Motion Mode</h2>
+            <button onClick={() => confirmMode("high")} style={{ ...btnStyle, background: "#007bff" }}>High Motion</button>
+            <button onClick={() => confirmMode("low")} style={{ ...btnStyle, background: "#6f42c1" }}>Low Motion</button>
+            <button onClick={() => setShowModeModal(false)} style={{ ...btnStyle, background: "#ff2f2f" }}>Cancel</button>
           </div>
         </div>
       )}
@@ -238,40 +211,7 @@ export default function RecordingPage() {
 }
 
 // --- Styles ---
-const btnStyle = {
-  margin: "10px",
-  padding: "10px 20px",
-  background: "#9bf0ff",
-  border: "none",
-  borderRadius: "5px",
-  fontSize: "16px",
-  cursor: "pointer",
-};
-const modalOverlay = {
-  position: "fixed",
-  top: 0,
-  left: 0,
-  width: "100vw",
-  height: "100vh",
-  backgroundColor: "rgba(0,0,0,0.6)",
-  display: "flex",
-  justifyContent: "center",
-  alignItems: "center",
-  zIndex: 1000,
-};
-const modalContent = {
-  background: "#1a1a1a",
-  padding: "20px",
-  borderRadius: "10px",
-  width: "400px",
-  textAlign: "center",
-};
-const inputStyle = {
-  width: "100%",
-  margin: "10px 0",
-  padding: "10px",
-  borderRadius: "5px",
-  border: "1px solid #555",
-  background: "#101010",
-  color: "#fff",
-};
+const btnStyle = { margin: "10px", padding: "10px 20px", background: "#9bf0ff", border: "none", borderRadius: "5px", fontSize: "16px", cursor: "pointer" };
+const modalOverlay = { position: "fixed", top: 0, left: 0, width: "100vw", height: "100vh", backgroundColor: "rgba(0,0,0,0.6)", display: "flex", justifyContent: "center", alignItems: "center", zIndex: 1000 };
+const modalContent = { background: "#1a1a1a", padding: "20px", borderRadius: "10px", width: "400px", textAlign: "center" };
+const inputStyle = { width: "100%", margin: "10px 0", padding: "10px", borderRadius: "5px", border: "1px solid #555", background: "#101010", color: "#fff" };
