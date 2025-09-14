@@ -1,10 +1,12 @@
-import React, {useMemo} from "react";
+import React from "react";
 import { useLanguage } from "../context/LanguageContext.jsx"; 
-import { LANGS, t } from "../i18n.js";
+import { t } from "../i18n.js";
 import VoiceWidget from "../components/VoiceWidget.jsx";
 
 export default function IntroPage() {
-  const pageTextByLang = {
+  const { lang } = useLanguage(); // Get the current language from context
+
+  const speakMap = {
     en: `Feel the Beat. Bee the Beat. 
          Synesthesia is a neurological phenomenon. A stimulus in one sensory 
          or cognitive pathway triggers an automatic, involuntary experience in 
@@ -34,16 +36,18 @@ export default function IntroPage() {
 
   return (
     <div className="page">
-      {/* HERO uses t(lang, ...) so it auto-updates */}
+      {/* HERO */}
       <main className="hero">
         <h1 className="title title-one">{t(lang, "hero1")}</h1>
         <h1 className="title title-two">{t(lang, "hero2")}</h1>
       </main>
 
-      {/* INSPIRATION uses t(lang, ...) */}
+      {/* INSPIRATION */}
       <section className="inspo-2col">
         <div className="inspo-left">
-          <div className="inspo-title"><h2>{t(lang, "inspoTitle")}</h2></div>
+          <div className="inspo-title">
+            <h2>{t(lang, "inspoTitle")}</h2>
+          </div>
           <div className="corner-block">
             <span className="corner tl" />
             <span className="corner tr" />
@@ -54,12 +58,14 @@ export default function IntroPage() {
           </div>
         </div>
         <div className="inspo-right">
-          <div className="inspo-copy"><p>{t(lang, "inspoCopy")}</p></div>
+          <div className="inspo-copy">
+            <p>{t(lang, "inspoCopy")}</p>
+          </div>
         </div>
       </section>
 
-      {/* Voice widget (bottom-right) */}
-      <VoiceWidget pageTextByLang={speakMap} />   
+      {/* Voice widget */}
+      <VoiceWidget pageTextByLang={speakMap} />
 
       <style>{`
         :root{
@@ -102,7 +108,7 @@ export default function IntroPage() {
         .title-two{
           text-align:right;
         }
-        
+
         /* Inspo Section */
         .inspo-2col{
           display:grid;
@@ -156,7 +162,6 @@ export default function IntroPage() {
           text-align:left;
         }
       `}</style>
-
     </div>
   );
 }

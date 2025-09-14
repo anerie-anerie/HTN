@@ -4,7 +4,7 @@ export default function Footer() {
     return (
         <footer className="footer">
             <div className="footer-text">
-                <small>© 2025 Motion to Music</small>
+                <small>© 2025 Bee the Beat</small>
 
                 {/* Bees with random wandering paths */}
                 <span className="bee bee1">🐝</span>

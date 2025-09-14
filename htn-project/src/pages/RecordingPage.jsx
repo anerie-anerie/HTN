@@ -1,4 +1,3 @@
-// RecordingPage.jsx
 import React, { useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
@@ -80,10 +79,13 @@ export default function RecordingPage() {
                 method: "POST",
                 body: formData,
             });
-
+        
+            console.log("Raw response:", response); // logs HTTP status etc.
             const data = await response.json();
+            console.log("Response JSON:", data);    // logs server message
+        
             if (response.ok) {
-                alert("Uploaded successfully! 🎉");
+                alert("Uploaded successfully!");
                 setShowModal(false);
                 setTitle("");
                 setDescription("");
