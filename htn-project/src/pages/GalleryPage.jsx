@@ -35,14 +35,28 @@ export default function GalleryPage() {
 
     const modalContent = {
         display: "flex",
+        position: "relative",
         background: "#101010",
         borderRadius: 12,
         overflow: "hidden",
-        maxWidth: "95%",  // increased width
-        maxHeight: "90%", // increased height
+        maxWidth: "95%",
+        maxHeight: "90%",
         width: "95%",
         height: "90%",
         boxShadow: "0 0 20px rgba(0,0,0,0.7)",
+    };
+
+    const closeButtonStyle = {
+        position: "absolute",
+        top: 10,
+        right: 10,
+        fontSize: 24,
+        fontWeight: "bold",
+        color: "#fff",
+        cursor: "pointer",
+        zIndex: 10000,
+        background: "transparent",
+        border: "none",
     };
 
     const videoStyle = {
@@ -93,6 +107,14 @@ export default function GalleryPage() {
             {selectedVideo && (
                 <div style={modalOverlay} onClick={() => setSelectedVideo(null)}>
                     <div style={modalContent} onClick={(e) => e.stopPropagation()}>
+                        {/* Close Button */}
+                        <button
+                            style={closeButtonStyle}
+                            onClick={() => setSelectedVideo(null)}
+                        >
+                            ×
+                        </button>
+
                         <video
                             controls
                             autoPlay
