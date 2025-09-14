@@ -7,7 +7,7 @@ export const LANGS = [
 export const tdict = {
   en: {
     hero1: "Feel the Beat,",
-    hero2: "Be the Beat",
+    hero2: "Bee the Beat",
     inspoTitle: "Inspiration",
     inspoCopy: 
     "Synesthesia is a neurological phenomenon. A stimulus in one sensory or cognitive pathway triggers an automatic, involuntary experience in another. Examples include tasting words or hearing colors. It is not a disease. It is a form of sensory crossover. Common forms include grapheme color synesthesia, where letters and numbers have colors, and sound color synesthesia, where music evokes colors.",
