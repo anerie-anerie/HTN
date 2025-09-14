@@ -1,6 +1,10 @@
 import React, { useEffect, useState, useRef } from "react";
 
 export default function GalleryPage() {
+    const isLight =
+    typeof document !== "undefined" &&
+    document.documentElement.classList.contains("light");
+
   const [videos, setVideos] = useState([]);
   const [selectedVideo, setSelectedVideo] = useState(null);
     const videoRefs = useRef({}); // refs for video elements
