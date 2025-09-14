@@ -179,7 +179,7 @@ export default function RecordingPage() {
           width: "60%",
           border: "2px solid #9bf0ff",
           borderRadius: "8px",
-          transform: "scaleX(-1)",
+          transform: "scaleX(1)",
         }}
       />
 
