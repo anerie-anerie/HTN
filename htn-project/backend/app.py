@@ -3,6 +3,7 @@ from flask_cors import CORS
 import boto3
 import os
 import time
+import json
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -27,15 +28,34 @@ def upload_video():
             return jsonify({"error": "No video file provided"}), 400
 
         file = request.files["video"]
-        filename = f"recordings/{int(time.time())}.webm"
+        title = request.form.get("title", "Untitled")
+        description = request.form.get("description", "")
 
-        # Upload to S3
-        s3.upload_fileobj(file, S3_BUCKET, filename, ExtraArgs={"ContentType": "video/webm"})
+        timestamp = int(time.time())
+        video_key = f"recordings/{timestamp}.webm"
+        metadata_key = f"recordings/{timestamp}.json"
 
-        # Generate pre-signed URL for immediate access
+        # Upload video
+        s3.upload_fileobj(file, S3_BUCKET, video_key, ExtraArgs={"ContentType": "video/webm"})
+
+        # Upload metadata
+        metadata = {
+            "title": title,
+            "description": description,
+            "video_key": video_key,
+            "uploaded_at": timestamp
+        }
+        s3.put_object(
+            Bucket=S3_BUCKET,
+            Key=metadata_key,
+            Body=json.dumps(metadata),
+            ContentType="application/json"
+        )
+
+        # Presigned URL for immediate playback
         url = s3.generate_presigned_url(
             ClientMethod="get_object",
-            Params={"Bucket": S3_BUCKET, "Key": filename},
+            Params={"Bucket": S3_BUCKET, "Key": video_key},
             ExpiresIn=3600
         )
 
@@ -45,6 +65,7 @@ def upload_video():
         print("Upload error:", e)
         return jsonify({"error": str(e)}), 500
 
+
 @app.route("/get-videos", methods=["GET"])
 def get_videos():
     try:
@@ -52,20 +73,36 @@ def get_videos():
         items = response.get("Contents", [])
 
         videos = []
-        for item in items:
-            key = item["Key"]
-            url = s3.generate_presigned_url(
+
+        # Only process JSON metadata files
+        json_files = [i for i in items if i["Key"].endswith(".json")]
+
+        for json_file in json_files:
+            obj = s3.get_object(Bucket=S3_BUCKET, Key=json_file["Key"])
+            metadata = json.loads(obj["Body"].read().decode("utf-8"))
+
+            video_url = s3.generate_presigned_url(
                 ClientMethod="get_object",
-                Params={"Bucket": S3_BUCKET, "Key": key},
+                Params={"Bucket": S3_BUCKET, "Key": metadata["video_key"]},
                 ExpiresIn=3600
             )
-            videos.append({"key": key, "url": url})
+
+            videos.append({
+                "title": metadata["title"],
+                "description": metadata["description"],
+                "url": video_url,
+                "uploaded_at": metadata["uploaded_at"]
+            })
+
+        # Sort newest first
+        videos.sort(key=lambda x: x["uploaded_at"], reverse=True)
 
         return jsonify(videos), 200
 
     except Exception as e:
         print("Error fetching videos:", e)
         return jsonify({"error": str(e)}), 500
+
 
 if __name__ == "__main__":
     app.run(debug=True, port=5000)

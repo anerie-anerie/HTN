@@ -1,3 +1,4 @@
+// RecordingPage.jsx
 import React, { useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
@@ -8,8 +9,15 @@ export default function RecordingPage() {
     const [stream, setStream] = useState(null);
     const [recordedChunks, setRecordedChunks] = useState([]);
     const [recordingStopped, setRecordingStopped] = useState(false);
+
+    // Modal state
+    const [showModal, setShowModal] = useState(false);
+    const [title, setTitle] = useState("");
+    const [description, setDescription] = useState("");
+
     const navigate = useNavigate();
 
+    // ---- Recording Functions ----
     const startCamera = async () => {
         try {
             const mediaStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
@@ -59,10 +67,13 @@ export default function RecordingPage() {
         URL.revokeObjectURL(url);
     };
 
-    const uploadVideo = async () => {
+    // ---- Upload with Metadata ----
+    const confirmUpload = async () => {
         const blob = new Blob(recordedChunks, { type: "video/webm" });
         const formData = new FormData();
         formData.append("video", blob, "recording.webm");
+        formData.append("title", title);
+        formData.append("description", description);
 
         try {
             const response = await fetch("http://localhost:5000/upload-video", {
@@ -73,6 +84,9 @@ export default function RecordingPage() {
             const data = await response.json();
             if (response.ok) {
                 alert("Uploaded successfully! 🎉");
+                setShowModal(false);
+                setTitle("");
+                setDescription("");
             } else {
                 alert("Upload failed: " + data.error);
             }
@@ -116,13 +130,39 @@ export default function RecordingPage() {
                 {recordedChunks.length > 0 && (
                     <>
                         <button onClick={downloadVideo} style={{ ...btnStyle, background: "#79e0f2" }}>Download Recording</button>
-                        <button onClick={uploadVideo} style={{ ...btnStyle, background: "#28a745" }}>Add to Gallery</button>
+                        <button onClick={() => setShowModal(true)} style={{ ...btnStyle, background: "#28a745" }}>Add to Gallery</button>
                     </>
                 )}
                 {recordingStopped && (
                     <button onClick={goToGallery} style={{ ...btnStyle, background: "#ffa500" }}>View Gallery</button>
                 )}
             </div>
+
+            {/* Upload Modal */}
+            {showModal && (
+                <div style={modalOverlay}>
+                    <div style={modalContent}>
+                        <h2>Submit to Gallery</h2>
+                        <input
+                            type="text"
+                            placeholder="Enter a title"
+                            value={title}
+                            onChange={(e) => setTitle(e.target.value)}
+                            style={inputStyle}
+                        />
+                        <textarea
+                            placeholder="Enter a description"
+                            value={description}
+                            onChange={(e) => setDescription(e.target.value)}
+                            style={{ ...inputStyle, height: 80 }}
+                        />
+                        <div>
+                            <button onClick={confirmUpload} style={{ ...btnStyle, background: "#28a745" }}>Upload</button>
+                            <button onClick={() => setShowModal(false)} style={{ ...btnStyle, background: "#ff2f2f" }}>Cancel</button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 }
@@ -135,4 +175,35 @@ const btnStyle = {
     borderRadius: "5px",
     fontSize: "16px",
     cursor: "pointer",
+};
+
+const modalOverlay = {
+    position: "fixed",
+    top: 0,
+    left: 0,
+    width: "100vw",
+    height: "100vh",
+    backgroundColor: "rgba(0,0,0,0.6)",
+    display: "flex",
+    justifyContent: "center",
+    alignItems: "center",
+    zIndex: 1000,
+};
+
+const modalContent = {
+    background: "#1a1a1a",
+    padding: "20px",
+    borderRadius: "10px",
+    width: "400px",
+    textAlign: "center",
+};
+
+const inputStyle = {
+    width: "100%",
+    margin: "10px 0",
+    padding: "10px",
+    borderRadius: "5px",
+    border: "1px solid #555",
+    background: "#101010",
+    color: "#fff",
 };
