@@ -1,72 +1,74 @@
 import React, { useRef, useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import * as Tone from "tone";
 
 export default function RecordingPage() {
-  const canvasRef = useRef(null);      // Canvas for OpenCV frames
+  const canvasRef = useRef(null);
   const wsRef = useRef(null);
   const mediaRecorderRef = useRef(null);
   const [isRecording, setIsRecording] = useState(false);
-  const [stream, setStream] = useState(null); // stream will now come from canvas
+  const [stream, setStream] = useState(null);
   const [recordedChunks, setRecordedChunks] = useState([]);
   const [recordingStopped, setRecordingStopped] = useState(false);
 
-  // Modal state
   const [showModal, setShowModal] = useState(false);
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
 
-  // Theme detection (sync with Navbar)
-  const [isLight, setIsLight] = useState(
-    typeof document !== "undefined" &&
-      document.documentElement.classList.contains("light")
-  );
+  const navigate = useNavigate();
+  const synthRef = useRef(null);
 
   useEffect(() => {
-    const observer = new MutationObserver(() => {
-      setIsLight(document.documentElement.classList.contains("light"));
-    });
-
-    observer.observe(document.documentElement, {
-      attributes: true,
-      attributeFilter: ["class"],
-    });
-
-    return () => observer.disconnect();
+    synthRef.current = new Tone.PolySynth(Tone.Synth).toDestination();
+    console.log("Tone started");
   }, []);
 
-  const navigate = useNavigate();
-
-  // --- WebSocket + OpenCV Canvas Setup ---
-  const enableCamera = () => {
+  const enableCamera = async () => {
     const canvas = canvasRef.current;
     const ctx = canvas.getContext("2d");
 
     wsRef.current = new WebSocket("ws://127.0.0.1:8000/ws/camera");
 
-    wsRef.current.onmessage = (event) => {
-      const img = new Image();
-      img.src = "data:image/jpeg;base64," + event.data;
-      img.onload = () => {
-        canvas.width = img.width;
-        canvas.height = img.height;
-        ctx.drawImage(img, 0, 0);
-      };
+    wsRef.current.onopen = () => {
+      console.log("WS open");
     };
 
-    wsRef.current.onopen = () => {
-      console.log("Connected to OpenCV WebSocket camera");
+    wsRef.current.onmessage = (event) => {
+      try {
+        const data = JSON.parse(event.data);
+        if (data.type === "frame" && data.b64) {
+          const img = new Image();
+          img.src = "data:image/jpeg;base64," + data.b64;
+          img.onload = () => {
+            canvas.width = img.width;
+            canvas.height = img.height;
+            ctx.drawImage(img, 0, 0);
+          };
+        }
+      } catch (err) {
+        console.error("WS parse error:", err);
+      }
     };
 
     wsRef.current.onclose = () => {
       console.log("WebSocket camera closed");
     };
 
-    // Save the "canvas stream" as our media stream for recording
-    const canvasStream = canvas.captureStream(30); // 30fps
-    setStream(canvasStream);
+    const canvasStream = canvas.captureStream(30);
+
+    try {
+      const mic = await navigator.mediaDevices.getUserMedia({ audio: true });
+      const combined = new MediaStream([
+        ...canvasStream.getTracks(),
+        ...mic.getTracks(),
+      ]);
+      setStream(combined);
+    } catch (err) {
+      console.error("Mic access failed:", err);
+      setStream(canvasStream);
+    }
   };
 
-  // ---- Recording Functions ----
   const startRecording = () => {
     if (!stream) {
       alert("Enable the camera first!");
@@ -135,13 +137,7 @@ export default function RecordingPage() {
   const goToGallery = () => navigate("/gallery");
 
   return (
-    <div
-      style={{
-        textAlign: "center",
-        padding: "20px",
-        color: isLight ? "#111" : "#eaeaea",
-      }}
-    >
+    <div style={{ textAlign: "center", padding: "20px", color: "#eaeaea" }}>
       <h1>Recording Page</h1>
 
       <canvas
@@ -199,51 +195,35 @@ export default function RecordingPage() {
         )}
       </div>
 
-      {/* Upload Modal */}
       {showModal && (
         <div style={modalOverlay}>
-          <div
-            style={isLight ? { ...modalContent, ...lightModalContent } : modalContent}
-          >
-            <h2 style={isLight ? { color: "#111", marginTop: 0 } : { marginTop: 0 }}>
-              Submit to Gallery
-            </h2>
+          <div style={modalContent}>
+            <h2 style={{ marginTop: 0 }}>Submit to Gallery</h2>
 
             <input
               type="text"
               placeholder="Enter a title"
               value={title}
               onChange={(e) => setTitle(e.target.value)}
-              style={isLight ? { ...inputStyle, ...lightInputStyle } : inputStyle}
+              style={inputStyle}
             />
             <textarea
               placeholder="Enter a description"
               value={description}
               onChange={(e) => setDescription(e.target.value)}
-              style={{
-                ...(isLight ? { ...inputStyle, ...lightInputStyle } : inputStyle),
-                height: 80,
-              }}
+              style={{ ...inputStyle, height: 80 }}
             />
 
             <div>
               <button
                 onClick={confirmUpload}
-                style={{
-                  ...btnStyle,
-                  background: "#28a745",
-                  ...(isLight ? lightBtnText : null),
-                }}
+                style={{ ...btnStyle, background: "#28a745" }}
               >
                 Upload
               </button>
               <button
                 onClick={() => setShowModal(false)}
-                style={{
-                  ...btnStyle,
-                  background: "#ff2f2f",
-                  ...(isLight ? lightBtnText : null),
-                }}
+                style={{ ...btnStyle, background: "#ff2f2f" }}
               >
                 Cancel
               </button>
@@ -293,12 +273,3 @@ const inputStyle = {
   background: "#101010",
   color: "#fff",
 };
-
-// Light mode overrides
-const lightModalContent = { background: "#f5f5f5", color: "#111" };
-const lightInputStyle = {
-  border: "1px solid #ccc",
-  background: "#fff",
-  color: "#111",
-};
-const lightBtnText = { color: "#fff" };
