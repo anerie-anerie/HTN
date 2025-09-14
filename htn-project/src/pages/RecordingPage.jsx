@@ -2,61 +2,80 @@ import React, { useRef, useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 
 export default function RecordingPage() {
-    const canvasRef = useRef(null);      // Canvas for OpenCV frames
-    const wsRef = useRef(null);
-    const mediaRecorderRef = useRef(null);
-    const [isRecording, setIsRecording] = useState(false);
-    const [stream, setStream] = useState(null); // stream will now come from canvas
-    const [recordedChunks, setRecordedChunks] = useState([]);
-    const [recordingStopped, setRecordingStopped] = useState(false);
+  const canvasRef = useRef(null);      // Canvas for OpenCV frames
+  const wsRef = useRef(null);
+  const mediaRecorderRef = useRef(null);
+  const [isRecording, setIsRecording] = useState(false);
+  const [stream, setStream] = useState(null); // stream will now come from canvas
+  const [recordedChunks, setRecordedChunks] = useState([]);
+  const [recordingStopped, setRecordingStopped] = useState(false);
 
   // Modal state
   const [showModal, setShowModal] = useState(false);
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
 
-    const navigate = useNavigate();
+  // Theme detection (sync with Navbar)
+  const [isLight, setIsLight] = useState(
+    typeof document !== "undefined" &&
+      document.documentElement.classList.contains("light")
+  );
 
-    // --- WebSocket + OpenCV Canvas Setup ---
-    const enableCamera = () => {
-        const canvas = canvasRef.current;
-        const ctx = canvas.getContext("2d");
+  useEffect(() => {
+    const observer = new MutationObserver(() => {
+      setIsLight(document.documentElement.classList.contains("light"));
+    });
 
-        wsRef.current = new WebSocket("ws://127.0.0.1:8000/ws/camera");
+    observer.observe(document.documentElement, {
+      attributes: true,
+      attributeFilter: ["class"],
+    });
 
-        wsRef.current.onmessage = (event) => {
-            const img = new Image();
-            img.src = "data:image/jpeg;base64," + event.data;
-            img.onload = () => {
-                canvas.width = img.width;
-                canvas.height = img.height;
-                ctx.drawImage(img, 0, 0);
-            };
-        };
+    return () => observer.disconnect();
+  }, []);
 
-        wsRef.current.onopen = () => {
-            console.log("Connected to OpenCV WebSocket camera");
-        };
+  const navigate = useNavigate();
 
-        wsRef.current.onclose = () => {
-            console.log("WebSocket camera closed");
-        };
+  // --- WebSocket + OpenCV Canvas Setup ---
+  const enableCamera = () => {
+    const canvas = canvasRef.current;
+    const ctx = canvas.getContext("2d");
 
-        // Save the "canvas stream" as our media stream for recording
-        const canvasStream = canvas.captureStream(30); // 30fps
-        setStream(canvasStream);
+    wsRef.current = new WebSocket("ws://127.0.0.1:8000/ws/camera");
+
+    wsRef.current.onmessage = (event) => {
+      const img = new Image();
+      img.src = "data:image/jpeg;base64," + event.data;
+      img.onload = () => {
+        canvas.width = img.width;
+        canvas.height = img.height;
+        ctx.drawImage(img, 0, 0);
+      };
     };
 
-    // ---- Recording Functions ----
-    const startRecording = () => {
-        if (!stream) {
-            alert("Enable the camera first!");
-            return;
-        }
+    wsRef.current.onopen = () => {
+      console.log("Connected to OpenCV WebSocket camera");
+    };
 
-        const recorder = new MediaRecorder(stream, { mimeType: "video/webm" });
-        mediaRecorderRef.current = recorder;
-        setRecordedChunks([]);
+    wsRef.current.onclose = () => {
+      console.log("WebSocket camera closed");
+    };
+
+    // Save the "canvas stream" as our media stream for recording
+    const canvasStream = canvas.captureStream(30); // 30fps
+    setStream(canvasStream);
+  };
+
+  // ---- Recording Functions ----
+  const startRecording = () => {
+    if (!stream) {
+      alert("Enable the camera first!");
+      return;
+    }
+
+    const recorder = new MediaRecorder(stream, { mimeType: "video/webm" });
+    mediaRecorderRef.current = recorder;
+    setRecordedChunks([]);
 
     recorder.ondataavailable = (event) => {
       if (event.data.size > 0) {
@@ -64,7 +83,7 @@ export default function RecordingPage() {
       }
     };
 
-        recorder.onstop = () => setRecordingStopped(true);
+    recorder.onstop = () => setRecordingStopped(true);
 
     recorder.start();
     setIsRecording(true);
@@ -85,77 +104,100 @@ export default function RecordingPage() {
     URL.revokeObjectURL(url);
   };
 
-    const confirmUpload = async () => {
-        const blob = new Blob(recordedChunks, { type: "video/webm" });
-        const formData = new FormData();
-        formData.append("video", blob, "recording.webm");
-        formData.append("title", title);
-        formData.append("description", description);
+  const confirmUpload = async () => {
+    const blob = new Blob(recordedChunks, { type: "video/webm" });
+    const formData = new FormData();
+    formData.append("video", blob, "recording.webm");
+    formData.append("title", title);
+    formData.append("description", description);
 
-        try {
-            const response = await fetch("http://127.0.0.1:5000/upload-video", {
-                method: "POST",
-                body: formData,
-            });
-            const data = await response.json();
+    try {
+      const response = await fetch("http://127.0.0.1:5000/upload-video", {
+        method: "POST",
+        body: formData,
+      });
+      const data = await response.json();
 
-            if (response.ok) {
-                alert("Uploaded successfully!");
-                setShowModal(false);
-                setTitle("");
-                setDescription("");
-            } else {
-                alert("Upload failed: " + data.error);
-            }
-        } catch (err) {
-            console.error("Upload error:", err);
-            alert("Upload failed. Check console for details.");
-        }
-    };
+      if (response.ok) {
+        alert("Uploaded successfully!");
+        setShowModal(false);
+        setTitle("");
+        setDescription("");
+      } else {
+        alert("Upload failed: " + data.error);
+      }
+    } catch (err) {
+      console.error("Upload error:", err);
+      alert("Upload failed. Check console for details.");
+    }
+  };
 
-    const goToGallery = () => navigate("/gallery");
+  const goToGallery = () => navigate("/gallery");
 
   return (
     <div
       style={{
         textAlign: "center",
         padding: "20px",
-        color: "#eaeaea",
-        ...(isLight ? { color: "#111" } : null),
+        color: isLight ? "#111" : "#eaeaea",
       }}
     >
       <h1>Recording Page</h1>
 
-            <canvas
-                ref={canvasRef}
-                style={{
-                    width: "60%",
-                    border: "2px solid #9bf0ff",
-                    borderRadius: "8px",
-                    transform: "scaleX(-1)"
-                }}
-            />
+      <canvas
+        ref={canvasRef}
+        style={{
+          width: "60%",
+          border: "2px solid #9bf0ff",
+          borderRadius: "8px",
+          transform: "scaleX(-1)",
+        }}
+      />
 
-            <div style={{ marginTop: "20px" }}>
-                {!stream && (
-                    <button onClick={enableCamera} style={btnStyle}>Enable Camera</button>
-                )}
-                {!isRecording && stream && (
-                    <button onClick={startRecording} style={btnStyle}>Start Recording</button>
-                )}
-                {isRecording && (
-                    <button onClick={stopRecording} style={{ ...btnStyle, background: "#ff2fb3" }}>Stop Recording</button>
-                )}
-                {recordedChunks.length > 0 && (
-                    <>
-                        <button onClick={downloadVideo} style={{ ...btnStyle, background: "#79e0f2" }}>Download Recording</button>
-                        <button onClick={() => setShowModal(true)} style={{ ...btnStyle, background: "#28a745" }}>Add to Gallery</button>
-                    </>
-                )}
-                {recordingStopped && (
-                    <button onClick={goToGallery} style={{ ...btnStyle, background: "#ffa500" }}>View Gallery</button>
-                )}
-            </div>
+      <div style={{ marginTop: "20px" }}>
+        {!stream && (
+          <button onClick={enableCamera} style={btnStyle}>
+            Enable Camera
+          </button>
+        )}
+        {!isRecording && stream && (
+          <button onClick={startRecording} style={btnStyle}>
+            Start Recording
+          </button>
+        )}
+        {isRecording && (
+          <button
+            onClick={stopRecording}
+            style={{ ...btnStyle, background: "#ff2fb3" }}
+          >
+            Stop Recording
+          </button>
+        )}
+        {recordedChunks.length > 0 && (
+          <>
+            <button
+              onClick={downloadVideo}
+              style={{ ...btnStyle, background: "#79e0f2" }}
+            >
+              Download Recording
+            </button>
+            <button
+              onClick={() => setShowModal(true)}
+              style={{ ...btnStyle, background: "#28a745" }}
+            >
+              Add to Gallery
+            </button>
+          </>
+        )}
+        {recordingStopped && (
+          <button
+            onClick={goToGallery}
+            style={{ ...btnStyle, background: "#ffa500" }}
+          >
+            View Gallery
+          </button>
+        )}
+      </div>
 
       {/* Upload Modal */}
       {showModal && (
@@ -214,7 +256,49 @@ export default function RecordingPage() {
 }
 
 // --- Styles ---
-const btnStyle = { margin: "10px", padding: "10px 20px", background: "#9bf0ff", border: "none", borderRadius: "5px", fontSize: "16px", cursor: "pointer" };
-const modalOverlay = { position: "fixed", top: 0, left: 0, width: "100vw", height: "100vh", backgroundColor: "rgba(0,0,0,0.6)", display: "flex", justifyContent: "center", alignItems: "center", zIndex: 1000 };
-const modalContent = { background: "#1a1a1a", padding: "20px", borderRadius: "10px", width: "400px", textAlign: "center" };
-const inputStyle = { width: "100%", margin: "10px 0", padding: "10px", borderRadius: "5px", border: "1px solid #555", background: "#101010", color: "#fff" };
+const btnStyle = {
+  margin: "10px",
+  padding: "10px 20px",
+  background: "#9bf0ff",
+  border: "none",
+  borderRadius: "5px",
+  fontSize: "16px",
+  cursor: "pointer",
+};
+const modalOverlay = {
+  position: "fixed",
+  top: 0,
+  left: 0,
+  width: "100vw",
+  height: "100vh",
+  backgroundColor: "rgba(0,0,0,0.6)",
+  display: "flex",
+  justifyContent: "center",
+  alignItems: "center",
+  zIndex: 1000,
+};
+const modalContent = {
+  background: "#1a1a1a",
+  padding: "20px",
+  borderRadius: "10px",
+  width: "400px",
+  textAlign: "center",
+};
+const inputStyle = {
+  width: "100%",
+  margin: "10px 0",
+  padding: "10px",
+  borderRadius: "5px",
+  border: "1px solid #555",
+  background: "#101010",
+  color: "#fff",
+};
+
+// Light mode overrides
+const lightModalContent = { background: "#f5f5f5", color: "#111" };
+const lightInputStyle = {
+  border: "1px solid #ccc",
+  background: "#fff",
+  color: "#111",
+};
+const lightBtnText = { color: "#fff" };
