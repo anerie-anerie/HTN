@@ -1,38 +1,53 @@
-import React, {useMemo} from "react";
+import React from "react";
 import { useLanguage } from "../context/LanguageContext.jsx"; 
-import { LANGS, t } from "../i18n.js";
+import { t } from "../i18n.js";
 import VoiceWidget from "../components/VoiceWidget.jsx";
 
 export default function IntroPage() {
-    const { lang } = useLanguage();
+  const { lang } = useLanguage(); // Get the current language from context
 
-    const speakMap = useMemo(() => {
-    const m = {};
-    for (const l of LANGS) {
-      m[l.code] = [
-        t(l.code, "hero1"),
-        t(l.code, "hero2"),
-        t(l.code, "inspoTitle"),
-        t(l.code, "inspoCopy"),
-        t(l.code, "corner1"),
-        t(l.code, "corner2"),
-      ].join(". ");
-    }
-    return m;
-  }, []);
+  const speakMap = {
+    en: `Feel the Beat. Bee the Beat. 
+         Synesthesia is a neurological phenomenon. A stimulus in one sensory 
+         or cognitive pathway triggers an automatic, involuntary experience in 
+         another. Examples include tasting words or hearing colors. It is not 
+         a disease. It is a form of sensory crossover. Common forms include 
+         grapheme color synesthesia, where letters and numbers have colors, and 
+         sound color synesthesia, where music evokes colors.
+         See the music. Hear the art. Move and let them meet.`,
+    fr: `Ressentez le rythme. Soyez au rythme.
+         La synesthésie est un phénomène neurologique. Un stimulus dans une voie 
+         sensorielle ou cognitive déclenche une expérience automatique et 
+         involontaire dans une autre. Par exemple, goûter des mots ou entendre 
+         des couleurs. Ce n'est pas une maladie. C'est une forme de croisement 
+         sensoriel. Les formes courantes incluent la synesthésie graphème-couleur, 
+         où les lettres et les chiffres sont colorés, et la synesthésie son-couleur, 
+         où la musique évoque des couleurs.
+         Voyez la musique. Écoutez l'art. Bougez et laissez-les se rencontrer.`,
+    es: `Siente el ritmo. Sé el ritmo.
+         La sinestesia es un fenómeno neurológico. Un estímulo en una vía sensorial 
+         o cognitiva desencadena una experiencia automática e involuntaria en otra. 
+         Algunos ejemplos incluyen el sabor de las palabras o la audición de los 
+         colores. No es una enfermedad. Es una forma de cruce sensorial. Las formas 
+         comunes incluyen la sinestesia grafema-color, donde las letras y los números 
+         tienen colores, y la sinestesia sonora-color, donde la música evoca colores.
+         Ve la música. Escucha el arte. Muévete y deja que se encuentren.`,
+  };
 
   return (
     <div className="page">
-      {/* HERO uses t(lang, ...) so it auto-updates */}
+      {/* HERO */}
       <main className="hero">
         <h1 className="title title-one">{t(lang, "hero1")}</h1>
         <h1 className="title title-two">{t(lang, "hero2")}</h1>
       </main>
 
-      {/* INSPIRATION uses t(lang, ...) */}
+      {/* INSPIRATION */}
       <section className="inspo-2col">
         <div className="inspo-left">
-          <div className="inspo-title"><h2>{t(lang, "inspoTitle")}</h2></div>
+          <div className="inspo-title">
+            <h2>{t(lang, "inspoTitle")}</h2>
+          </div>
           <div className="corner-block">
             <span className="corner tl" />
             <span className="corner tr" />
@@ -43,12 +58,14 @@ export default function IntroPage() {
           </div>
         </div>
         <div className="inspo-right">
-          <div className="inspo-copy"><p>{t(lang, "inspoCopy")}</p></div>
+          <div className="inspo-copy">
+            <p>{t(lang, "inspoCopy")}</p>
+          </div>
         </div>
       </section>
 
-      {/* Voice widget (bottom-right) */}
-      <VoiceWidget pageTextByLang={speakMap} />   
+      {/* Voice widget */}
+      <VoiceWidget pageTextByLang={speakMap} />
 
       <style>{`
         :root{
@@ -105,7 +122,7 @@ export default function IntroPage() {
         .title-two{
           text-align:right;
         }
-        
+
         /* Inspo Section */
         .inspo-2col{
           display:grid;
@@ -159,7 +176,6 @@ export default function IntroPage() {
           text-align:left;
         }
       `}</style>
-
     </div>
   );
 }
