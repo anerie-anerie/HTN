@@ -1,11 +1,12 @@
-import React, { useRef, useState } from "react";
+import React, { useRef, useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 
 export default function RecordingPage() {
-    const videoRef = useRef(null);
+    const canvasRef = useRef(null);      // Canvas for OpenCV frames
+    const wsRef = useRef(null);
     const mediaRecorderRef = useRef(null);
     const [isRecording, setIsRecording] = useState(false);
-    const [stream, setStream] = useState(null);
+    const [stream, setStream] = useState(null); // stream will now come from canvas
     const [recordedChunks, setRecordedChunks] = useState([]);
     const [recordingStopped, setRecordingStopped] = useState(false);
 
@@ -16,24 +17,44 @@ export default function RecordingPage() {
 
     const navigate = useNavigate();
 
-    // ---- Recording Functions ----
-    const startCamera = async () => {
-        try {
-            const mediaStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
-            videoRef.current.srcObject = mediaStream;
-            setStream(mediaStream);
-        } catch (err) {
-            console.error("Error accessing camera:", err);
-            alert("Please allow camera and microphone access!");
-        }
+    // --- WebSocket + OpenCV Canvas Setup ---
+    const enableCamera = () => {
+        const canvas = canvasRef.current;
+        const ctx = canvas.getContext("2d");
+
+        wsRef.current = new WebSocket("ws://127.0.0.1:8000/ws/camera");
+
+        wsRef.current.onmessage = (event) => {
+            const img = new Image();
+            img.src = "data:image/jpeg;base64," + event.data;
+            img.onload = () => {
+                canvas.width = img.width;
+                canvas.height = img.height;
+                ctx.drawImage(img, 0, 0);
+            };
+        };
+
+        wsRef.current.onopen = () => {
+            console.log("Connected to OpenCV WebSocket camera");
+        };
+
+        wsRef.current.onclose = () => {
+            console.log("WebSocket camera closed");
+        };
+
+        // Save the "canvas stream" as our media stream for recording
+        const canvasStream = canvas.captureStream(30); // 30fps
+        setStream(canvasStream);
     };
 
+    // ---- Recording Functions ----
     const startRecording = () => {
         if (!stream) {
-            alert("Start the camera first!");
+            alert("Enable the camera first!");
             return;
         }
-        const recorder = new MediaRecorder(stream);
+
+        const recorder = new MediaRecorder(stream, { mimeType: "video/webm" });
         mediaRecorderRef.current = recorder;
         setRecordedChunks([]);
 
@@ -43,9 +64,7 @@ export default function RecordingPage() {
             }
         };
 
-        recorder.onstop = () => {
-            setRecordingStopped(true);
-        };
+        recorder.onstop = () => setRecordingStopped(true);
 
         recorder.start();
         setIsRecording(true);
@@ -66,7 +85,6 @@ export default function RecordingPage() {
         URL.revokeObjectURL(url);
     };
 
-    // ---- Upload with Metadata ----
     const confirmUpload = async () => {
         const blob = new Blob(recordedChunks, { type: "video/webm" });
         const formData = new FormData();
@@ -79,11 +97,8 @@ export default function RecordingPage() {
                 method: "POST",
                 body: formData,
             });
-        
-            console.log("Raw response:", response); // logs HTTP status etc.
             const data = await response.json();
-            console.log("Response JSON:", data);    // logs server message
-        
+
             if (response.ok) {
                 alert("Uploaded successfully!");
                 setShowModal(false);
@@ -98,19 +113,14 @@ export default function RecordingPage() {
         }
     };
 
-    const goToGallery = () => {
-        navigate("/gallery");
-    };
+    const goToGallery = () => navigate("/gallery");
 
     return (
         <div style={{ textAlign: "center", padding: "20px", color: "#eaeaea" }}>
             <h1>Recording Page</h1>
 
-            <video
-                ref={videoRef}
-                autoPlay
-                playsInline
-                muted
+            <canvas
+                ref={canvasRef}
                 style={{
                     width: "60%",
                     border: "2px solid #9bf0ff",
@@ -121,7 +131,7 @@ export default function RecordingPage() {
 
             <div style={{ marginTop: "20px" }}>
                 {!stream && (
-                    <button onClick={startCamera} style={btnStyle}>Enable Camera</button>
+                    <button onClick={enableCamera} style={btnStyle}>Enable Camera</button>
                 )}
                 {!isRecording && stream && (
                     <button onClick={startRecording} style={btnStyle}>Start Recording</button>
@@ -169,43 +179,8 @@ export default function RecordingPage() {
     );
 }
 
-const btnStyle = {
-    margin: "10px",
-    padding: "10px 20px",
-    background: "#9bf0ff",
-    border: "none",
-    borderRadius: "5px",
-    fontSize: "16px",
-    cursor: "pointer",
-};
-
-const modalOverlay = {
-    position: "fixed",
-    top: 0,
-    left: 0,
-    width: "100vw",
-    height: "100vh",
-    backgroundColor: "rgba(0,0,0,0.6)",
-    display: "flex",
-    justifyContent: "center",
-    alignItems: "center",
-    zIndex: 1000,
-};
-
-const modalContent = {
-    background: "#1a1a1a",
-    padding: "20px",
-    borderRadius: "10px",
-    width: "400px",
-    textAlign: "center",
-};
-
-const inputStyle = {
-    width: "100%",
-    margin: "10px 0",
-    padding: "10px",
-    borderRadius: "5px",
-    border: "1px solid #555",
-    background: "#101010",
-    color: "#fff",
-};
+// --- Styles ---
+const btnStyle = { margin: "10px", padding: "10px 20px", background: "#9bf0ff", border: "none", borderRadius: "5px", fontSize: "16px", cursor: "pointer" };
+const modalOverlay = { position: "fixed", top: 0, left: 0, width: "100vw", height: "100vh", backgroundColor: "rgba(0,0,0,0.6)", display: "flex", justifyContent: "center", alignItems: "center", zIndex: 1000 };
+const modalContent = { background: "#1a1a1a", padding: "20px", borderRadius: "10px", width: "400px", textAlign: "center" };
+const inputStyle = { width: "100%", margin: "10px 0", padding: "10px", borderRadius: "5px", border: "1px solid #555", background: "#101010", color: "#fff" };
