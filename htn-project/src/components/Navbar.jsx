@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { useLanguage } from "../context/LanguageContext.jsx";
+import { useTheme } from "../context/ThemeContext.jsx";
 import { t } from "../i18n.js";
 
 export default function Navbar() {
@@ -8,12 +9,7 @@ export default function Navbar() {
     const { pathname } = useLocation();
     const [hidden, setHidden] = useState(false);
     const lastY = useRef(0);
-
-    // theme toggle state (reflects <html>.light)
-    const [isLight, setIsLight] = useState(
-      typeof document !== "undefined" &&
-        document.documentElement.classList.contains("light")
-    );
+    const { isLight } = useTheme();
 
     useEffect(() => {
         const onScroll = () => {

@@ -1,6 +1,7 @@
 import React from "react";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { LanguageProvider } from "./context/LanguageContext.jsx";
+import { ThemeProvider } from "./context/ThemeContext.jsx";
 import Navbar from "./components/Navbar.jsx";
 import Footer from "./components/Footer.jsx";
 import IntroPage from "./pages/IntroPage.jsx";
@@ -9,6 +10,7 @@ import GalleryPage from "./pages/GalleryPage.jsx";
 
 export default function App() {
   return (
+    <ThemeProvider>
     <LanguageProvider defaultLang="en">
     <BrowserRouter>
       <div className="app-shell" style={{ minHeight: "100dvh", display: "flex", flexDirection: "column" }}>
@@ -25,5 +27,6 @@ export default function App() {
       </div>
     </BrowserRouter>
     </LanguageProvider>
+    </ThemeProvider>
   );
 }

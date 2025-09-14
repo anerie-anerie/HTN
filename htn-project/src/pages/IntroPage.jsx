@@ -2,10 +2,11 @@ import React from "react";
 import { useLanguage } from "../context/LanguageContext.jsx"; 
 import { t } from "../i18n.js";
 import VoiceWidget from "../components/VoiceWidget.jsx";
+import { useTheme } from "../context/ThemeContext.jsx";
 
 export default function IntroPage() {
-  const { lang } = useLanguage(); // Get the current language from context
-
+  const { lang } = useLanguage(); 
+  const { isLight } = useTheme();
   const speakMap = {
     en: `Feel the Beat. Bee the Beat. 
          Synesthesia is a neurological phenomenon. A stimulus in one sensory 
