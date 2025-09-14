@@ -53,3 +53,7 @@ coverage/
 
 # stray root lockfile
 /package-lock.json
+
+# vapi env 
+.env*
+.env.local

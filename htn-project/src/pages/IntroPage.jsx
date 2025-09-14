@@ -1,6 +1,35 @@
 import React from "react";
+import VoiceWidget from "../components/VoiceWidget.jsx";
 
 export default function IntroPage() {
+  const pageTextByLang = {
+    en: `Feel the Beat. Be the Beat. 
+         Synesthesia is a neurological phenomenon. A stimulus in one sensory 
+         or cognitive pathway triggers an automatic, involuntary experience in 
+         another. Examples include tasting words or hearing colors. It is not 
+         a disease. It is a form of sensory crossover. Common forms include 
+         grapheme color synesthesia, where letters and numbers have colors, and 
+         sound color synesthesia, where music evokes colors.
+         See the music. Hear the art. Move and let them meet.`,
+    fr: `Ressentez le rythme. Soyez au rythme.
+         La synesthésie est un phénomène neurologique. Un stimulus dans une voie 
+         sensorielle ou cognitive déclenche une expérience automatique et 
+         involontaire dans une autre. Par exemple, goûter des mots ou entendre 
+         des couleurs. Ce n'est pas une maladie. C'est une forme de croisement 
+         sensoriel. Les formes courantes incluent la synesthésie graphème-couleur, 
+         où les lettres et les chiffres sont colorés, et la synesthésie son-couleur, 
+         où la musique évoque des couleurs.
+         Voyez la musique. Écoutez l'art. Bougez et laissez-les se rencontrer.`,
+    es: `Siente el ritmo. Sé el ritmo.
+         La sinestesia es un fenómeno neurológico. Un estímulo en una vía sensorial 
+         o cognitiva desencadena una experiencia automática e involuntaria en otra. 
+         Algunos ejemplos incluyen el sabor de las palabras o la audición de los 
+         colores. No es una enfermedad. Es una forma de cruce sensorial. Las formas 
+         comunes incluyen la sinestesia grafema-color, donde las letras y los números 
+         tienen colores, y la sinestesia sonora-color, donde la música evoca colores.
+         Ve la música. Escucha el arte. Muévete y deja que se encuentren.`,
+  };
+
   return (
     <div className="page">
 
@@ -40,6 +69,8 @@ export default function IntroPage() {
           </div>
         </div>
     </section>
+
+    <VoiceWidget pageTextByLang={pageTextByLang}/>    
 
       <style>{`
         :root{
