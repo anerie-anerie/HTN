@@ -25,7 +25,7 @@ export default function GalleryPage() {
         left: 0,
         width: "100vw",
         height: "100vh",
-        backgroundColor: "rgba(0,0,0,0.8)",
+        backgroundColor: "rgba(0,0,0,0.85)",
         display: "flex",
         alignItems: "center",
         justifyContent: "center",
@@ -38,8 +38,28 @@ export default function GalleryPage() {
         background: "#101010",
         borderRadius: 12,
         overflow: "hidden",
-        maxWidth: "90%",
-        maxHeight: "80%",
+        maxWidth: "95%",  // increased width
+        maxHeight: "90%", // increased height
+        width: "95%",
+        height: "90%",
+        boxShadow: "0 0 20px rgba(0,0,0,0.7)",
+    };
+
+    const videoStyle = {
+        width: "70%",
+        height: "100%",
+        objectFit: "contain",
+    };
+
+    const textContainer = {
+        padding: 20,
+        color: "#fff",
+        display: "flex",
+        flexDirection: "column",
+        justifyContent: "flex-start",
+        overflowY: "auto",
+        width: "30%",
+        maxHeight: "100%",
     };
 
     return (
@@ -76,21 +96,11 @@ export default function GalleryPage() {
                         <video
                             controls
                             autoPlay
-                            style={{ maxWidth: "60%", maxHeight: "100%" }}
+                            style={videoStyle}
                         >
                             <source src={selectedVideo.url} type="video/webm" />
                         </video>
-                        <div
-                            style={{
-                                padding: 20,
-                                color: "#fff",
-                                display: "flex",
-                                flexDirection: "column",
-                                justifyContent: "flex-start",
-                                overflowY: "auto",
-                                maxHeight: "100%",
-                            }}
-                        >
+                        <div style={textContainer}>
                             <h2 style={{ margin: 0 }}>{selectedVideo.title}</h2>
                             <p style={{ marginTop: 10, color: "#ccc" }}>
                                 {selectedVideo.description}
