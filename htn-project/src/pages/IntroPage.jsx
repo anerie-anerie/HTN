@@ -3,7 +3,7 @@ import VoiceWidget from "../components/VoiceWidget.jsx";
 
 export default function IntroPage() {
   const pageTextByLang = {
-    en: `Feel the Beat. Be the Beat. 
+    en: `Feel the Beat. Bee the Beat. 
          Synesthesia is a neurological phenomenon. A stimulus in one sensory 
          or cognitive pathway triggers an automatic, involuntary experience in 
          another. Examples include tasting words or hearing colors. It is not 

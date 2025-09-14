@@ -76,7 +76,7 @@ export default function RecordingPage() {
         formData.append("description", description);
 
         try {
-            const response = await fetch("http://localhost:5000/upload-video", {
+            const response = await fetch("http://127.0.0.1:5000/upload-video", {
                 method: "POST",
                 body: formData,
             });
