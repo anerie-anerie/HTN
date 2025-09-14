@@ -52,12 +52,22 @@ export default function IntroPage() {
 
       <style>{`
         :root{
-          --bg:#0b0b0b; 
           --text:#eaeaea; 
-          --muted:#a8a8a8;
-          --accent:#9bf0ff; 
-          --accent-2:#79e0f2; 
+          --muted: #d5d5d5;
+          --edge: #e9e9e9;
+          --accent: #9bf0ff;
           --gap:24px;
+          --title-glow:
+            0 0 6px rgba(155,240,255,.55),
+            0 0 14px rgba(155,240,255,.45),
+            0 0 28px rgba(255,47,179,.35);
+        }
+        :root.light {
+          --muted: #3a3a3a;
+          --edge: #1f1f1f;
+          --title-shadow:
+            0 1px 2px rgba(0,0,0,.20),
+            0 3px 6px rgba(0,0,0,.15);
         }
 
         .page{
@@ -84,6 +94,10 @@ export default function IntroPage() {
           color:var(--accent);
           letter-spacing:-0.5px;
           padding-bottom:30px;
+          text-shadow: var(--title-glow);
+        }
+        html.light .title{
+          text-shadow: var(--title-shadow);
         }
         .title-one{
           padding-top:5vw; 
@@ -108,7 +122,7 @@ export default function IntroPage() {
         }
         .inspo-title h2{
           margin:0;
-          color:var(--accent);
+          color:var(--muted);
           font-size:clamp(30px, 5vw, 50px);
           font-weight:700;
           letter-spacing:0.5px;
@@ -127,10 +141,10 @@ export default function IntroPage() {
           height:16px; 
           border-color:#e9e9e9;
         }
-        .tl{left:0; top:0; border-left:2px solid #e9e9e9; border-top:2px solid #e9e9e9}
-        .tr{right:0; top:0; border-right:2px solid #e9e9e9; border-top:2px solid #e9e9e9}
-        .bl{left:0; bottom:0; border-left:2px solid #e9e9e9; border-bottom:2px solid #e9e9e9}
-        .br{right:0; bottom:0; border-right:2px solid #e9e9e9; border-bottom:2px solid #e9e9e9}
+        .tl{left:0; top:0; border-left:2px solid var(--edge); border-top:2px solid var(--edge)}
+        .tr{right:0; top:0; border-right:2px solid var(--edge); border-top:2px solid var(--edge)}
+        .bl{left:0; bottom:0; border-left:2px solid var(--edge); border-bottom:2px solid var(--edge)}
+        .br{right:0; bottom:0; border-right:2px solid var(--edge); border-bottom:2px solid var(--edge)}
 
         .inspo-right{
           display:flex;
@@ -140,7 +154,7 @@ export default function IntroPage() {
         .inspo-copy p{
           margin:0;
           max-width:60ch;
-          color:#d5d5d5;
+          color:var(--muted);
           line-height:1.6;
           text-align:left;
         }
