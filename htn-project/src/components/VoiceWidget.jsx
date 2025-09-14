@@ -1,6 +1,7 @@
-// src/components/VoiceWidget.jsx
 import React, { useEffect, useRef, useState } from "react";
-import { LANGS, speakTTSOnly, vapi, getAssistantIdFor } from "../lib/vapi";
+import { useLanguage } from "../context/LanguageContext.jsx";
+import { LANGS, t } from "../i18n.js";
+import { speakTTSOnly, vapi, getAssistantIdFor } from "../lib/vapi.js";
 
 /* ---------- Small custom select (dark + glow) ---------- */
 function LangSelect({ value, onChange, options }) {
@@ -21,14 +22,13 @@ function LangSelect({ value, onChange, options }) {
   const glowIdle =
     "0 0 0 1px rgba(155,240,255,.35), 0 0 14px rgba(155,240,255,.28), 0 0 28px rgba(255,47,179,.18)";
 
-  const selected = options.find(o => o.code === value) || options[0];
+  const selected = options.find((o) => o.code === value) || options[0];
 
   return (
     <div ref={boxRef} style={{ position: "relative", width: 170 }}>
-      {/* fake select button */}
       <button
         type="button"
-        onClick={() => setOpen(o => !o)}
+        onClick={() => setOpen((o) => !o)}
         style={{
           width: "100%",
           display: "flex",
@@ -51,7 +51,6 @@ function LangSelect({ value, onChange, options }) {
         </svg>
       </button>
 
-      {/* dropdown menu (DARK) */}
       {open && (
         <div
           style={{
@@ -69,8 +68,8 @@ function LangSelect({ value, onChange, options }) {
             zIndex: 10,
           }}
         >
-          {options.map(opt => {
-            const disabled = !getAssistantIdFor(opt.code); // grey out if no agent id
+          {options.map((opt) => {
+            const disabled = !getAssistantIdFor(opt.code);
             const active = opt.code === value;
             return (
               <button
@@ -101,9 +100,9 @@ function LangSelect({ value, onChange, options }) {
 }
 
 /* ---------- Voice widget ---------- */
-export default function VoiceWidget({ pageTextByLang, defaultLang = "en" }) {
+export default function VoiceWidget({ pageTextByLang }) {
+  const { lang, setLang } = useLanguage(); // shared app language
   const [open, setOpen] = useState(false);
-  const [lang, setLang] = useState(defaultLang);
   const [isConnected, setIsConnected] = useState(false);
   const [isSpeaking, setIsSpeaking] = useState(false);
   const [isHover, setIsHover] = useState(false);
@@ -114,7 +113,10 @@ export default function VoiceWidget({ pageTextByLang, defaultLang = "en" }) {
   useEffect(() => {
     if (!vapi) return;
     const onStart = () => setIsConnected(true);
-    const onEnd = () => { setIsConnected(false); setIsSpeaking(false); };
+    const onEnd = () => {
+      setIsConnected(false);
+      setIsSpeaking(false);
+    };
     const onSpeechStart = () => setIsSpeaking(true);
     const onSpeechEnd = () => setIsSpeaking(false);
 
@@ -132,20 +134,26 @@ export default function VoiceWidget({ pageTextByLang, defaultLang = "en" }) {
     };
   }, []);
 
-  const handleSpeak = async () => { await speakTTSOnly(text, lang); };
+  const handleSpeak = async () => {
+    await speakTTSOnly(text, lang); // start -> mute -> say -> end
+  };
   const handleStop = () => {
     vapi?.stop?.();
     if ("speechSynthesis" in window) window.speechSynthesis.cancel();
     setIsSpeaking(false);
   };
 
-  // button/panel glow
-  const glowIdle  = "0 0 0 1px rgba(155,240,255,.35), 0 0 14px rgba(155,240,255,.28), 0 0 28px rgba(255,47,179,.18)";
-  const glowHover = "0 0 0 2px rgba(155,240,255,.85), 0 0 18px rgba(155,240,255,.65), 0 0 36px rgba(255,47,179,.35)";
-  const glowSpeak = "0 0 0 2px rgba(255,47,179,.9), 0 0 22px rgba(255,47,179,.55), 0 0 44px rgba(155,240,255,.35)";
+  // glow presets
+  const glowIdle =
+    "0 0 0 1px rgba(155,240,255,.35), 0 0 14px rgba(155,240,255,.28), 0 0 28px rgba(255,47,179,.18)";
+  const glowHover =
+    "0 0 0 2px rgba(155,240,255,.85), 0 0 18px rgba(155,240,255,.65), 0 0 36px rgba(255,47,179,.35)";
+  const glowSpeak =
+    "0 0 0 2px rgba(255,47,179,.9), 0 0 22px rgba(255,47,179,.55), 0 0 44px rgba(155,240,255,.35)";
 
-  const buttonShadow = isSpeaking ? glowSpeak : (open || isHover ? glowHover : glowIdle);
-  const panelShadow  = "0 0 0 1px rgba(155,240,255,.25), 0 8px 32px rgba(0,0,0,.55), 0 0 24px rgba(155,240,255,.2)";
+  const buttonShadow = isSpeaking ? glowSpeak : open || isHover ? glowHover : glowIdle;
+  const panelShadow =
+    "0 0 0 1px rgba(155,240,255,.25), 0 8px 32px rgba(0,0,0,.55), 0 0 24px rgba(155,240,255,.2)";
 
   return (
     <div style={wrap}>
@@ -153,7 +161,7 @@ export default function VoiceWidget({ pageTextByLang, defaultLang = "en" }) {
       <button
         aria-label="Voice"
         title="Voice"
-        onClick={() => setOpen(o => !o)}
+        onClick={() => setOpen((o) => !o)}
         onMouseEnter={() => setIsHover(true)}
         onMouseLeave={() => setIsHover(false)}
         style={{ ...fab, boxShadow: buttonShadow }}
@@ -170,21 +178,26 @@ export default function VoiceWidget({ pageTextByLang, defaultLang = "en" }) {
       {open && (
         <div style={{ ...panel, boxShadow: panelShadow }}>
           <div style={row}>
-            <span style={label}>Language</span>
-            {/* our dark custom select */}
+            <span style={label}>{t(lang, "language")}</span>
             <LangSelect value={lang} onChange={setLang} options={LANGS} />
           </div>
 
-          <div style={{ display:"flex", gap:8 }}>
+          <div style={{ display: "flex", gap: 8 }}>
             {!isConnected ? (
-              <button onClick={handleSpeak} style={btnPrimary}>Speak</button>
+              <button onClick={handleSpeak} style={btnPrimary}>
+                {t(lang, "speak")}
+              </button>
             ) : (
-              <button onClick={handleStop} style={btnDanger}>Stop</button>
+              <button onClick={handleStop} style={btnDanger}>
+                {t(lang, "stop")}
+              </button>
             )}
-            <button onClick={() => setOpen(false)} style={btnGhost}>Close</button>
+            <button onClick={() => setOpen(false)} style={btnGhost}>
+              {t(lang, "close")}
+            </button>
           </div>
 
-          <div style={{ marginTop:10, fontSize:12, opacity:.85 }}>{statusText}</div>
+          <div style={{ marginTop: 10, fontSize: 12, opacity: 0.85 }}>{statusText}</div>
         </div>
       )}
     </div>
@@ -192,30 +205,63 @@ export default function VoiceWidget({ pageTextByLang, defaultLang = "en" }) {
 }
 
 /* styles */
-const wrap = { position:"fixed", right:24, bottom:24, zIndex:1000 };
+const wrap = { position: "fixed", right: 24, bottom: 24, zIndex: 1000 };
 
 const fab = {
-  width:56, height:56, borderRadius:"50%",
-  border:"1px solid rgba(42,42,42,.9)",
-  background:"radial-gradient(120% 120% at 30% 30%, #1a1a1a 0%, #0f0f0f 60%, #0b0b0b 100%)",
-  color:"#eaeaea", cursor:"pointer",
-  display:"grid", placeItems:"center", padding:0, lineHeight:1,
-  transition:"box-shadow .22s ease, transform .12s ease",
+  width: 56,
+  height: 56,
+  borderRadius: "50%",
+  border: "1px solid rgba(42,42,42,.9)",
+  background:
+    "radial-gradient(120% 120% at 30% 30%, #1a1a1a 0%, #0f0f0f 60%, #0b0b0b 100%)",
+  color: "#eaeaea",
+  cursor: "pointer",
+  display: "grid",
+  placeItems: "center",
+  padding: 0,
+  lineHeight: 1,
+  transition: "box-shadow .22s ease, transform .12s ease",
 };
 
 const panel = {
-  position:"absolute", right:0, bottom:72, width:280,
-  background:"rgba(12,12,12,.96)", border:"1px solid rgba(42,42,42,.95)",
-  borderRadius:12, padding:12, backdropFilter:"blur(4px)",
+  position: "absolute",
+  right: 0,
+  bottom: 72,
+  width: 280,
+  background: "rgba(12,12,12,.96)",
+  border: "1px solid rgba(42,42,42,.95)",
+  borderRadius: 12,
+  padding: 12,
+  backdropFilter: "blur(4px)",
 };
 
-const row   = { display:"flex", alignItems:"center", justifyContent:"space-between", gap:8, marginBottom:8 };
-const label = { fontSize:13, opacity:.85 };
+const row = {
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "space-between",
+  gap: 8,
+  marginBottom: 8,
+};
+const label = { fontSize: 13, opacity: 0.85 };
 
 const btnBase = {
-  padding:"8px 12px", borderRadius:8, border:"1px solid #2a2a2a",
-  background:"#141414", color:"#eaeaea", cursor:"pointer",
+  padding: "8px 12px",
+  borderRadius: 8,
+  border: "1px solid #2a2a2a",
+  background: "#141414",
+  color: "#eaeaea",
+  cursor: "pointer",
 };
-const btnPrimary = { ...btnBase, borderColor:"#3874ff", background:"#1a2140", boxShadow:"0 0 0 1px rgba(56,116,255,.35), 0 0 14px rgba(56,116,255,.3)" };
-const btnDanger  = { ...btnBase, borderColor:"#ff3b3b", background:"#401a1a", boxShadow:"0 0 0 1px rgba(255,59,59,.35), 0 0 14px rgba(255,59,59,.28)" };
-const btnGhost   = { ...btnBase, opacity:.85 };
+const btnPrimary = {
+  ...btnBase,
+  borderColor: "#3874ff",
+  background: "#1a2140",
+  boxShadow: "0 0 0 1px rgba(56,116,255,.35), 0 0 14px rgba(56,116,255,.3)",
+};
+const btnDanger = {
+  ...btnBase,
+  borderColor: "#ff3b3b",
+  background: "#401a1a",
+  boxShadow: "0 0 0 1px rgba(255,59,59,.35), 0 0 14px rgba(255,59,59,.28)",
+};
+const btnGhost = { ...btnBase, opacity: 0.85 }

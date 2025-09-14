@@ -1,76 +1,54 @@
-import React from "react";
+import React, {useMemo} from "react";
+import { useLanguage } from "../context/LanguageContext.jsx"; 
+import { LANGS, t } from "../i18n.js";
 import VoiceWidget from "../components/VoiceWidget.jsx";
 
 export default function IntroPage() {
-  const pageTextByLang = {
-    en: `Feel the Beat. Be the Beat. 
-         Synesthesia is a neurological phenomenon. A stimulus in one sensory 
-         or cognitive pathway triggers an automatic, involuntary experience in 
-         another. Examples include tasting words or hearing colors. It is not 
-         a disease. It is a form of sensory crossover. Common forms include 
-         grapheme color synesthesia, where letters and numbers have colors, and 
-         sound color synesthesia, where music evokes colors.
-         See the music. Hear the art. Move and let them meet.`,
-    fr: `Ressentez le rythme. Soyez au rythme.
-         La synesthésie est un phénomène neurologique. Un stimulus dans une voie 
-         sensorielle ou cognitive déclenche une expérience automatique et 
-         involontaire dans une autre. Par exemple, goûter des mots ou entendre 
-         des couleurs. Ce n'est pas une maladie. C'est une forme de croisement 
-         sensoriel. Les formes courantes incluent la synesthésie graphème-couleur, 
-         où les lettres et les chiffres sont colorés, et la synesthésie son-couleur, 
-         où la musique évoque des couleurs.
-         Voyez la musique. Écoutez l'art. Bougez et laissez-les se rencontrer.`,
-    es: `Siente el ritmo. Sé el ritmo.
-         La sinestesia es un fenómeno neurológico. Un estímulo en una vía sensorial 
-         o cognitiva desencadena una experiencia automática e involuntaria en otra. 
-         Algunos ejemplos incluyen el sabor de las palabras o la audición de los 
-         colores. No es una enfermedad. Es una forma de cruce sensorial. Las formas 
-         comunes incluyen la sinestesia grafema-color, donde las letras y los números 
-         tienen colores, y la sinestesia sonora-color, donde la música evoca colores.
-         Ve la música. Escucha el arte. Muévete y deja que se encuentren.`,
-  };
+    const { lang } = useLanguage();
+
+    const speakMap = useMemo(() => {
+    const m = {};
+    for (const l of LANGS) {
+      m[l.code] = [
+        t(l.code, "hero1"),
+        t(l.code, "hero2"),
+        t(l.code, "inspoTitle"),
+        t(l.code, "inspoCopy"),
+        t(l.code, "corner1"),
+        t(l.code, "corner2"),
+      ].join(". ");
+    }
+    return m;
+  }, []);
 
   return (
     <div className="page">
-
+      {/* HERO uses t(lang, ...) so it auto-updates */}
       <main className="hero">
-          <h1 className="title title-one">Feel the Beat,</h1>
-          <h1 className="title title-two">Be the Beat</h1>
+        <h1 className="title title-one">{t(lang, "hero1")}</h1>
+        <h1 className="title title-two">{t(lang, "hero2")}</h1>
       </main>
 
-    <section className="inspo-2col">
+      {/* INSPIRATION uses t(lang, ...) */}
+      <section className="inspo-2col">
         <div className="inspo-left">
-          <div className="inspo-title">
-            <h2>Inspiration</h2>
-          </div>
-
-          <div className="inspo-corner">
-            <div className="corner-block">
-              <span className="corner tl" />
-              <span className="corner tr" />
-              <p>See the music. Hear the art.</p>
-              <p>Move and let them meet.</p>
-              <span className="corner bl" />
-              <span className="corner br" />
-            </div>
+          <div className="inspo-title"><h2>{t(lang, "inspoTitle")}</h2></div>
+          <div className="corner-block">
+            <span className="corner tl" />
+            <span className="corner tr" />
+            <p>{t(lang, "corner1")}</p>
+            <p>{t(lang, "corner2")}</p>
+            <span className="corner bl" />
+            <span className="corner br" />
           </div>
         </div>
-
         <div className="inspo-right">
-          <div className="inspo-copy">
-            <p>
-              Synesthesia is a neurological phenomenon. A stimulus in one sensory 
-              or cognitive pathway triggers an automatic, involuntary experience in 
-              another. Examples include tasting words or hearing colors. It is not 
-              a disease. It is a form of sensory crossover. Common forms include 
-              grapheme color synesthesia, where letters and numbers have colors, and 
-              sound color synesthesia, where music evokes colors.
-            </p>
-          </div>
+          <div className="inspo-copy"><p>{t(lang, "inspoCopy")}</p></div>
         </div>
-    </section>
+      </section>
 
-    <VoiceWidget pageTextByLang={pageTextByLang}/>    
+      {/* Voice widget (bottom-right) */}
+      <VoiceWidget pageTextByLang={speakMap} />   
 
       <style>{`
         :root{
@@ -79,6 +57,7 @@ export default function IntroPage() {
           --muted:#a8a8a8;
           --accent:#9bf0ff; 
           --accent-2:#79e0f2; 
+          --gap:24px;
         }
 
         .page{
@@ -98,23 +77,19 @@ export default function IntroPage() {
         }
         .title{
           margin:0;
-          line-height:.95;
+          font-family:'Inter', system-ui;
+          font-weight:700;
+          font-size:clamp(48px, 12vw, 128px);
+          line-height:1;
           color:var(--accent);
           letter-spacing:-0.5px;
           padding-bottom:30px;
         }
         .title-one{
-          font-family:'Inter', system-ui;
-          font-weight:700;
-          font-size:clamp(48px, 12vw, 128px);
-          padding-right:10vw; 
           padding-top:5vw; 
         }
         .title-two{
-          font-family:'Inter', system-ui;
-          font-weight:700;
-          font-size:clamp(48px, 12vw, 128px);
-          padding-left:30vw; 
+          text-align:right;
         }
         
         /* Inspo Section */

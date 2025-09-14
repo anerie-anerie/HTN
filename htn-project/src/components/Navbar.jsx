@@ -1,7 +1,10 @@
 import React, { useEffect, useRef, useState } from "react";
 import { Link, useLocation } from "react-router-dom";
+import { useLanguage } from "../context/LanguageContext.jsx";
+import { t } from "../i18n.js";
 
 export default function Navbar() {
+    const { lang } = useLanguage();
     const { pathname } = useLocation();
     const [hidden, setHidden] = useState(false);
     const lastY = useRef(0);
@@ -19,11 +22,11 @@ export default function Navbar() {
         return () => window.removeEventListener("scroll", onScroll);
     }, []);
 
-    const links = [
-        { to: "/", label: "Home" },
-        { to: "/record", label: "Record" },
-        { to: "/gallery", label: "Gallery" },
-    ];
+    const links = React.useMemo(() => ([
+        { to: "/",        label: t(lang, "home") },
+        { to: "/record",  label: t(lang, "record") },
+        { to: "/gallery", label: t(lang, "gallery") },
+      ]), [lang]);
 
     return (
         <>
