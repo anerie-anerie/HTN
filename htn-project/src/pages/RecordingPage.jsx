@@ -10,10 +10,10 @@ export default function RecordingPage() {
     const [recordedChunks, setRecordedChunks] = useState([]);
     const [recordingStopped, setRecordingStopped] = useState(false);
 
-    // Modal state
-    const [showModal, setShowModal] = useState(false);
-    const [title, setTitle] = useState("");
-    const [description, setDescription] = useState("");
+  // Modal state
+  const [showModal, setShowModal] = useState(false);
+  const [title, setTitle] = useState("");
+  const [description, setDescription] = useState("");
 
     const navigate = useNavigate();
 
@@ -58,32 +58,32 @@ export default function RecordingPage() {
         mediaRecorderRef.current = recorder;
         setRecordedChunks([]);
 
-        recorder.ondataavailable = (event) => {
-            if (event.data.size > 0) {
-                setRecordedChunks((prev) => [...prev, event.data]);
-            }
-        };
+    recorder.ondataavailable = (event) => {
+      if (event.data.size > 0) {
+        setRecordedChunks((prev) => [...prev, event.data]);
+      }
+    };
 
         recorder.onstop = () => setRecordingStopped(true);
 
-        recorder.start();
-        setIsRecording(true);
-    };
+    recorder.start();
+    setIsRecording(true);
+  };
 
-    const stopRecording = () => {
-        mediaRecorderRef.current.stop();
-        setIsRecording(false);
-    };
+  const stopRecording = () => {
+    mediaRecorderRef.current.stop();
+    setIsRecording(false);
+  };
 
-    const downloadVideo = () => {
-        const blob = new Blob(recordedChunks, { type: "video/webm" });
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement("a");
-        a.href = url;
-        a.download = "recording.webm";
-        a.click();
-        URL.revokeObjectURL(url);
-    };
+  const downloadVideo = () => {
+    const blob = new Blob(recordedChunks, { type: "video/webm" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "recording.webm";
+    a.click();
+    URL.revokeObjectURL(url);
+  };
 
     const confirmUpload = async () => {
         const blob = new Blob(recordedChunks, { type: "video/webm" });
@@ -115,9 +115,16 @@ export default function RecordingPage() {
 
     const goToGallery = () => navigate("/gallery");
 
-    return (
-        <div style={{ textAlign: "center", padding: "20px", color: "#eaeaea" }}>
-            <h1>Recording Page</h1>
+  return (
+    <div
+      style={{
+        textAlign: "center",
+        padding: "20px",
+        color: "#eaeaea",
+        ...(isLight ? { color: "#111" } : null),
+      }}
+    >
+      <h1>Recording Page</h1>
 
             <canvas
                 ref={canvasRef}
@@ -150,33 +157,60 @@ export default function RecordingPage() {
                 )}
             </div>
 
-            {/* Upload Modal */}
-            {showModal && (
-                <div style={modalOverlay}>
-                    <div style={modalContent}>
-                        <h2>Submit to Gallery</h2>
-                        <input
-                            type="text"
-                            placeholder="Enter a title"
-                            value={title}
-                            onChange={(e) => setTitle(e.target.value)}
-                            style={inputStyle}
-                        />
-                        <textarea
-                            placeholder="Enter a description"
-                            value={description}
-                            onChange={(e) => setDescription(e.target.value)}
-                            style={{ ...inputStyle, height: 80 }}
-                        />
-                        <div>
-                            <button onClick={confirmUpload} style={{ ...btnStyle, background: "#28a745" }}>Upload</button>
-                            <button onClick={() => setShowModal(false)} style={{ ...btnStyle, background: "#ff2f2f" }}>Cancel</button>
-                        </div>
-                    </div>
-                </div>
-            )}
+      {/* Upload Modal */}
+      {showModal && (
+        <div style={modalOverlay}>
+          <div
+            style={isLight ? { ...modalContent, ...lightModalContent } : modalContent}
+          >
+            <h2 style={isLight ? { color: "#111", marginTop: 0 } : { marginTop: 0 }}>
+              Submit to Gallery
+            </h2>
+
+            <input
+              type="text"
+              placeholder="Enter a title"
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+              style={isLight ? { ...inputStyle, ...lightInputStyle } : inputStyle}
+            />
+            <textarea
+              placeholder="Enter a description"
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              style={{
+                ...(isLight ? { ...inputStyle, ...lightInputStyle } : inputStyle),
+                height: 80,
+              }}
+            />
+
+            <div>
+              <button
+                onClick={confirmUpload}
+                style={{
+                  ...btnStyle,
+                  background: "#28a745",
+                  ...(isLight ? lightBtnText : null),
+                }}
+              >
+                Upload
+              </button>
+              <button
+                onClick={() => setShowModal(false)}
+                style={{
+                  ...btnStyle,
+                  background: "#ff2f2f",
+                  ...(isLight ? lightBtnText : null),
+                }}
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
         </div>
-    );
+      )}
+    </div>
+  );
 }
 
 // --- Styles ---

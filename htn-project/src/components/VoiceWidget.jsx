@@ -3,7 +3,7 @@ import { useLanguage } from "../context/LanguageContext.jsx";
 import { LANGS, t } from "../i18n.js";
 import { speakTTSOnly, vapi, getAssistantIdFor } from "../lib/vapi.js";
 
-/* ---------- Small custom select (dark + glow) ---------- */
+/* ---------- Small custom select (dark + glow, light + shadow) ---------- */
 function LangSelect({ value, onChange, options }) {
   const [open, setOpen] = useState(false);
   const boxRef = useRef(null);
@@ -17,10 +17,19 @@ function LangSelect({ value, onChange, options }) {
     return () => document.removeEventListener("mousedown", onDocClick);
   }, []);
 
+  // theme flag (dark default)
+  const isLight =
+    typeof document !== "undefined" &&
+    document.documentElement.classList.contains("light");
+
   const glowHover =
     "0 0 0 2px rgba(155,240,255,.85), 0 0 18px rgba(155,240,255,.65), 0 0 36px rgba(255,47,179,.35)";
   const glowIdle =
     "0 0 0 1px rgba(155,240,255,.35), 0 0 14px rgba(155,240,255,.28), 0 0 28px rgba(255,47,179,.18)";
+
+  // light-mode shadows
+  const shadowIdle = "0 2px 6px rgba(0,0,0,.25)";
+  const shadowHover = "0 4px 10px rgba(0,0,0,.35)";
 
   const selected = options.find((o) => o.code === value) || options[0];
 
@@ -36,12 +45,15 @@ function LangSelect({ value, onChange, options }) {
           alignItems: "center",
           gap: 8,
           padding: "10px 12px",
-          background:
-            "linear-gradient(180deg, rgba(16,16,16,1) 0%, rgba(11,11,11,1) 100%)",
-          color: "#fff",
-          border: "1px solid #2a2a2a",
+          background: isLight
+            ? "#f8f8f8"
+            : "linear-gradient(180deg, rgba(16,16,16,1) 0%, rgba(11,11,11,1) 100%)",
+          color: isLight ? "#111" : "#fff",
+          border: isLight ? "1px solid rgba(0,0,0,.2)" : "1px solid #2a2a2a",
           borderRadius: 10,
-          boxShadow: open ? glowHover : glowIdle,
+          boxShadow: open
+            ? (isLight ? shadowHover : glowHover)
+            : (isLight ? shadowIdle : glowIdle),
           cursor: "pointer",
         }}
       >
@@ -58,13 +70,14 @@ function LangSelect({ value, onChange, options }) {
             top: "calc(100% + 8px)",
             right: 0,
             width: "100%",
-            background: "rgba(10,10,10,.98)",
-            color: "#fff",
-            border: "1px solid #2a2a2a",
+            background: isLight ? "#ffffff" : "rgba(10,10,10,.98)",
+            color: isLight ? "#111" : "#fff",
+            border: isLight ? "1px solid rgba(0,0,0,.15)" : "1px solid #2a2a2a",
             borderRadius: 10,
             overflow: "hidden",
-            boxShadow:
-              "0 0 0 1px rgba(155,240,255,.25), 0 0 24px rgba(155,240,255,.25)",
+            boxShadow: isLight
+              ? "0 4px 20px rgba(0,0,0,.25)"
+              : "0 0 0 1px rgba(155,240,255,.25), 0 0 24px rgba(155,240,255,.25)",
             zIndex: 10,
           }}
         >
@@ -83,8 +96,12 @@ function LangSelect({ value, onChange, options }) {
                   width: "100%",
                   textAlign: "left",
                   padding: "10px 12px",
-                  background: active ? "#1c2f66" : "transparent",
-                  color: disabled ? "rgba(255,255,255,.35)" : "#fff",
+                  background: isLight
+                    ? (active ? "#e8efff" : "transparent")
+                    : (active ? "#1c2f66" : "transparent"),
+                  color: disabled
+                    ? (isLight ? "rgba(0,0,0,.35)" : "rgba(255,255,255,.35)")
+                    : (isLight ? "#111" : "#fff"),
                   border: "none",
                   cursor: disabled ? "not-allowed" : "pointer",
                 }}
@@ -143,7 +160,12 @@ export default function VoiceWidget({ pageTextByLang }) {
     setIsSpeaking(false);
   };
 
-  // glow presets
+  // theme flag (dark default)
+  const isLight =
+    typeof document !== "undefined" &&
+    document.documentElement.classList.contains("light");
+
+  // glow presets (dark mode keeps original look)
   const glowIdle =
     "0 0 0 1px rgba(155,240,255,.35), 0 0 14px rgba(155,240,255,.28), 0 0 28px rgba(255,47,179,.18)";
   const glowHover =
@@ -151,9 +173,20 @@ export default function VoiceWidget({ pageTextByLang }) {
   const glowSpeak =
     "0 0 0 2px rgba(255,47,179,.9), 0 0 22px rgba(255,47,179,.55), 0 0 44px rgba(155,240,255,.35)";
 
-  const buttonShadow = isSpeaking ? glowSpeak : open || isHover ? glowHover : glowIdle;
-  const panelShadow =
-    "0 0 0 1px rgba(155,240,255,.25), 0 8px 32px rgba(0,0,0,.55), 0 0 24px rgba(155,240,255,.2)";
+  // light-mode drop-shadows
+  const shadowIdle = "0 2px 6px rgba(0,0,0,.25)";
+  const shadowHover = "0 4px 10px rgba(0,0,0,.35)";
+  const shadowSpeak = "0 6px 14px rgba(0,0,0,.45)";
+
+  const buttonShadow = isSpeaking
+    ? (isLight ? shadowSpeak : glowSpeak)
+    : (open || isHover)
+      ? (isLight ? shadowHover : glowHover)
+      : (isLight ? shadowIdle : glowIdle);
+
+  const panelShadow = isLight
+    ? "0 4px 20px rgba(0,0,0,.25)"
+    : "0 0 0 1px rgba(155,240,255,.25), 0 8px 32px rgba(0,0,0,.55), 0 0 24px rgba(155,240,255,.2)";
 
   return (
     <div style={wrap}>
@@ -164,7 +197,7 @@ export default function VoiceWidget({ pageTextByLang }) {
         onClick={() => setOpen((o) => !o)}
         onMouseEnter={() => setIsHover(true)}
         onMouseLeave={() => setIsHover(false)}
-        style={{ ...fab, boxShadow: buttonShadow }}
+        style={{ ...(isLight ? lightFab : fab), boxShadow: buttonShadow }}
       >
         <svg width="26" height="26" viewBox="0 0 24 24" aria-hidden="true">
           <path
@@ -176,7 +209,7 @@ export default function VoiceWidget({ pageTextByLang }) {
 
       {/* panel */}
       {open && (
-        <div style={{ ...panel, boxShadow: panelShadow }}>
+        <div style={{ ...(isLight ? lightPanel : panel), boxShadow: panelShadow }}>
           <div style={row}>
             <span style={label}>{t(lang, "language")}</span>
             <LangSelect value={lang} onChange={setLang} options={LANGS} />
@@ -192,7 +225,14 @@ export default function VoiceWidget({ pageTextByLang }) {
                 {t(lang, "stop")}
               </button>
             )}
-            <button onClick={() => setOpen(false)} style={btnGhost}>
+            <button
+              onClick={() => setOpen(false)}
+              style={
+                isLight
+                  ? { ...btnGhost, background: "#f5f5f5", color: "#111", border: "1px solid #ccc" }
+                  : btnGhost
+              }
+            >
               {t(lang, "close")}
             </button>
           </div>
@@ -223,6 +263,13 @@ const fab = {
   transition: "box-shadow .22s ease, transform .12s ease",
 };
 
+const lightFab = {
+  ...fab,
+  border: "1px solid rgba(0,0,0,.2)",
+  background: "#f8f8f8",
+  color: "#111",
+};
+
 const panel = {
   position: "absolute",
   right: 0,
@@ -233,6 +280,13 @@ const panel = {
   borderRadius: 12,
   padding: 12,
   backdropFilter: "blur(4px)",
+};
+
+const lightPanel = {
+  ...panel,
+  background: "#ffffff",
+  border: "1px solid rgba(0,0,0,.15)",
+  backdropFilter: undefined,
 };
 
 const row = {
@@ -264,4 +318,4 @@ const btnDanger = {
   background: "#401a1a",
   boxShadow: "0 0 0 1px rgba(255,59,59,.35), 0 0 14px rgba(255,59,59,.28)",
 };
-const btnGhost = { ...btnBase, opacity: 0.85 }
+const btnGhost = { ...btnBase, opacity: 0.85 };

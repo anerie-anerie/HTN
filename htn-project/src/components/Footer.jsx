@@ -16,11 +16,10 @@ export default function Footer() {
         .footer {
           position: relative;
           padding: 40px 0;
-          border-top: 1px solid #1f1f1f;
           text-align: center;
           font-size: 14px;
-          color: #eaeaea;
-          background: #0b0b0b;
+          color: var(--text);
+          background: var(--bg);
           overflow: hidden;
         }
 

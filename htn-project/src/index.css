@@ -32,6 +32,7 @@ body {
 }
 
 p {
+  color: var(--text);
   font-size: var(--p-size);
   line-height: var(--p-line);
 }
@@ -75,4 +76,15 @@ button:hover {
 button:focus,
 button:focus-visible {
   outline: 4px auto -webkit-focus-ring-color;
+}
+
+/* Light mode overrides */
+:root.light {
+  --bg: #ffffff;
+  --text: #0b0b0b;
+  --link: #2d4cdf;
+  --link-hover: #1a2fbf;
+  --btn-bg: #f2f2f2;
+
+  color-scheme: light;
 }
