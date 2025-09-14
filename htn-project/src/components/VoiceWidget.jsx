@@ -2,11 +2,13 @@ import React, { useEffect, useRef, useState } from "react";
 import { useLanguage } from "../context/LanguageContext.jsx";
 import { LANGS, t } from "../i18n.js";
 import { speakTTSOnly, vapi, getAssistantIdFor } from "../lib/vapi.js";
+import { useTheme } from "../context/ThemeContext.jsx";
 
 /* ---------- Small custom select (dark + glow, light + shadow) ---------- */
 function LangSelect({ value, onChange, options }) {
   const [open, setOpen] = useState(false);
   const boxRef = useRef(null);
+  const { isLight } = useTheme();
 
   useEffect(() => {
     function onDocClick(e) {
@@ -16,11 +18,6 @@ function LangSelect({ value, onChange, options }) {
     document.addEventListener("mousedown", onDocClick);
     return () => document.removeEventListener("mousedown", onDocClick);
   }, []);
-
-  // theme flag (dark default)
-  const isLight =
-    typeof document !== "undefined" &&
-    document.documentElement.classList.contains("light");
 
   const glowHover =
     "0 0 0 2px rgba(155,240,255,.85), 0 0 18px rgba(155,240,255,.65), 0 0 36px rgba(255,47,179,.35)";

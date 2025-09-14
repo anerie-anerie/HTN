@@ -1,8 +1,10 @@
 import React, { useRef, useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import * as Tone from "tone";
+import { useTheme } from "../context/ThemeContext.jsx";
 
 export default function RecordingPage() {
+  const { isLight } = useTheme();
   const canvasRef = useRef(null);
   const wsRef = useRef(null);
   const mediaRecorderRef = useRef(null);
@@ -137,7 +139,7 @@ export default function RecordingPage() {
   const goToGallery = () => navigate("/gallery");
 
   return (
-    <div style={{ textAlign: "center", padding: "20px", color: "#eaeaea" }}>
+    <div style={{ textAlign: "center", padding: "20px", color: "--text" }}>
       <h1>Recording Page</h1>
 
       <canvas

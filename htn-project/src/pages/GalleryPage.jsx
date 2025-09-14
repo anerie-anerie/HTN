@@ -1,16 +1,13 @@
 import React, { useEffect, useState, useRef } from "react";
+import { useTheme } from "../context/ThemeContext.jsx";
 
 export default function GalleryPage() {
-    const isLight =
     typeof document !== "undefined" &&
     document.documentElement.classList.contains("light");
 
   const [videos, setVideos] = useState([]);
   const [selectedVideo, setSelectedVideo] = useState(null);
-  const [isLight, setIsLight] = useState(
-    typeof document !== "undefined" &&
-      document.documentElement.classList.contains("light")
-  );
+  const { isLight } = useTheme();
   const videoRefs = useRef({}); // refs for video elements
 
   useEffect(() => {
