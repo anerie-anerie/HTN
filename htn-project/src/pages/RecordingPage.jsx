@@ -1,4 +1,3 @@
-// src/pages/RecordingPage.jsx
 import React, { useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
@@ -73,7 +72,7 @@ export default function RecordingPage() {
 
             const data = await response.json();
             if (response.ok) {
-                alert("Uploaded successfully! 🎉\nURL: " + data.url);
+                alert("Uploaded successfully! 🎉");
             } else {
                 alert("Upload failed: " + data.error);
             }
@@ -106,34 +105,22 @@ export default function RecordingPage() {
 
             <div style={{ marginTop: "20px" }}>
                 {!stream && (
-                    <button onClick={startCamera} style={btnStyle}>
-                        Enable Camera
-                    </button>
+                    <button onClick={startCamera} style={btnStyle}>Enable Camera</button>
                 )}
                 {!isRecording && stream && (
-                    <button onClick={startRecording} style={btnStyle}>
-                        Start Recording
-                    </button>
+                    <button onClick={startRecording} style={btnStyle}>Start Recording</button>
                 )}
                 {isRecording && (
-                    <button onClick={stopRecording} style={{ ...btnStyle, background: "#ff2fb3" }}>
-                        Stop Recording
-                    </button>
+                    <button onClick={stopRecording} style={{ ...btnStyle, background: "#ff2fb3" }}>Stop Recording</button>
                 )}
                 {recordedChunks.length > 0 && (
                     <>
-                        <button onClick={downloadVideo} style={{ ...btnStyle, background: "#79e0f2" }}>
-                            Download Recording
-                        </button>
-                        <button onClick={uploadVideo} style={{ ...btnStyle, background: "#28a745" }}>
-                            Add to Gallery
-                        </button>
+                        <button onClick={downloadVideo} style={{ ...btnStyle, background: "#79e0f2" }}>Download Recording</button>
+                        <button onClick={uploadVideo} style={{ ...btnStyle, background: "#28a745" }}>Add to Gallery</button>
                     </>
                 )}
                 {recordingStopped && (
-                    <button onClick={goToGallery} style={{ ...btnStyle, background: "#ffa500" }}>
-                        View Gallery
-                    </button>
+                    <button onClick={goToGallery} style={{ ...btnStyle, background: "#ffa500" }}>View Gallery</button>
                 )}
             </div>
         </div>

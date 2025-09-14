@@ -20,10 +20,6 @@ s3 = boto3.client(
     region_name=AWS_REGION
 )
 
-@app.route("/", methods=["GET"])
-def index():
-    return "Flask backend is running!"
-
 @app.route("/upload-video", methods=["POST"])
 def upload_video():
     try:
@@ -33,15 +29,43 @@ def upload_video():
         file = request.files["video"]
         filename = f"recordings/{int(time.time())}.webm"
 
+        # Upload to S3
         s3.upload_fileobj(file, S3_BUCKET, filename, ExtraArgs={"ContentType": "video/webm"})
 
-        url = f"https://{S3_BUCKET}.s3.{AWS_REGION}.amazonaws.com/{filename}"
-        return jsonify({"message": "Upload successful"}), 200
+        # Generate pre-signed URL for immediate access
+        url = s3.generate_presigned_url(
+            ClientMethod="get_object",
+            Params={"Bucket": S3_BUCKET, "Key": filename},
+            ExpiresIn=3600
+        )
+
+        return jsonify({"message": "Upload successful", "url": url}), 200
 
     except Exception as e:
         print("Upload error:", e)
         return jsonify({"error": str(e)}), 500
 
+@app.route("/get-videos", methods=["GET"])
+def get_videos():
+    try:
+        response = s3.list_objects_v2(Bucket=S3_BUCKET, Prefix="recordings/")
+        items = response.get("Contents", [])
+
+        videos = []
+        for item in items:
+            key = item["Key"]
+            url = s3.generate_presigned_url(
+                ClientMethod="get_object",
+                Params={"Bucket": S3_BUCKET, "Key": key},
+                ExpiresIn=3600
+            )
+            videos.append({"key": key, "url": url})
+
+        return jsonify(videos), 200
+
+    except Exception as e:
+        print("Error fetching videos:", e)
+        return jsonify({"error": str(e)}), 500
 
 if __name__ == "__main__":
-    app.run(debug=True, port=5000, host="0.0.0.0")
+    app.run(debug=True, port=5000)
